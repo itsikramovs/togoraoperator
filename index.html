@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tog'ora ARM — v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#F0F2F8;color:#1A2340;font-size:14px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.shell{display:flex;flex:1;overflow:hidden}
+
+/* ── LEFT NAV ── */
+.leftnav{width:52px;background:#1A2340;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px}
+.lnav-logo{width:32px;height:32px;background:#4A6CF7;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;margin-bottom:6px}
+.lnav-item{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.38);font-size:15px;cursor:pointer;transition:all .12s;position:relative}
+.lnav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.75)}
+.lnav-item.active{background:rgba(255,255,255,.1);color:#fff}
+.lnav-badge{position:absolute;top:2px;right:2px;background:#E53935;color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.lnav-sep{width:28px;height:1px;background:rgba(255,255,255,.07);margin:3px 0}
+.lnav-bottom{margin-top:auto}
+.userav{width:28px;height:28px;border-radius:50%;background:#4A6CF7;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;cursor:pointer}
+
+/* ── OP SIDEBAR ── */
+.opsidebar{width:208px;background:#fff;border-right:1px solid #E2E6F0;flex-shrink:0;display:flex;flex-direction:column}
+.opsidebar-head{padding:13px 13px 9px;border-bottom:1px solid #ECEEF8;flex-shrink:0}
+.opsidebar-title{font-size:13px;font-weight:700;color:#1A2340}
+.opsidebar-clk{font-size:11px;color:#9AABCC;font-family:monospace;margin-top:1px}
+.opsidebar-body{flex:1;overflow-y:auto;padding:5px 0}
+.opsidebar-body::-webkit-scrollbar{width:3px}
+.opsidebar-body::-webkit-scrollbar-thumb{background:#E0E4EE;border-radius:2px}
+.grp-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;color:#BCC8DC;text-transform:uppercase;padding:8px 13px 2px}
+.otab{display:flex;align-items:center;gap:7px;padding:8px 11px 8px 9px;cursor:pointer;border-left:3px solid transparent;transition:all .12s}
+.otab:hover{background:#F5F7FC}
+.otab.active{background:#EEF2FF;border-left-color:#4A6CF7}
+.otab.active .otn{color:#4A6CF7;font-weight:600}
+.tab-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.otn{font-size:12px;color:#607090;flex:1}
+.otc{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;min-width:19px;text-align:center}
+.c-bl{background:#E3F2FD;color:#1565C0}.c-or{background:#FFF3E0;color:#E65100}
+.c-ye{background:#FFF9C4;color:#827717}.c-gr{background:#E8F5E9;color:#2E7D32}
+.c-re{background:#FFEBEE;color:#C62828}.c-gy{background:#EEF0F8;color:#8896B3}
+.otab.by{animation:tabY 1.4s ease-in-out infinite}
+.otab.br{animation:tabR 1s ease-in-out infinite}
+@keyframes tabY{0%,100%{background:transparent}50%{background:#FFFDE7}}
+@keyframes tabR{0%,100%{background:transparent}50%{background:#FFF0F0}}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{background:#fff;border-bottom:1px solid #E2E6F0;padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;height:50px}
+.panel-title{font-size:15px;font-weight:700;color:#1A2340;white-space:nowrap}
+.panel-sub{font-size:11px;color:#9AABCC;white-space:nowrap}
+.shift-p{background:#FFF3E0;border:1px solid #FFE0B2;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#E65100;white-space:nowrap}
+.clk-p{background:#F0F2F8;border:1px solid #E2E6F0;border-radius:6px;padding:3px 9px;font-size:12px;font-weight:600;color:#1A2340;font-family:monospace}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+
+/* search */
+.srch-box{position:relative}
+.srch-box input{width:220px;padding:6px 9px 6px 28px;border:1px solid #E2E6F0;border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;color:#1A2340;background:#F5F7FC;outline:none;transition:all .15s}
+.srch-box input:focus{background:#fff;border-color:#4A6CF7;width:260px}
+.srch-box input::placeholder{color:#BCC8DC}
+.srch-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#BCC8DC;font-size:12px;pointer-events:none}
+.srch-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#BCC8DC;font-size:12px;cursor:pointer;display:none}
+.srch-clear.show{display:block}
+
+/* filter buttons */
+.filter-btn{padding:6px 10px;border:1px solid #E2E6F0;border-radius:7px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:#607090;background:#fff;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:all .12s}
+.filter-btn:hover{border-color:#4A6CF7;color:#4A6CF7}
+.filter-btn.active{background:#EEF2FF;border-color:#4A6CF7;color:#4A6CF7}
+
+/* op filter dropdown */
+.op-filter-wrap{position:relative}
+.op-filter-menu{display:none;position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid #E2E6F0;border-radius:9px;box-shadow:0 4px 16px rgba(26,35,64,.1);padding:6px 0;min-width:180px;z-index:200}
+.op-filter-wrap.open .op-filter-menu{display:block}
+.op-filter-item{display:flex;align-items:center;gap:8px;padding:7px 13px;font-size:12px;cursor:pointer;transition:background .1s;color:#1A2340}
+.op-filter-item:hover{background:#F5F7FC}
+.op-filter-item.sel{background:#EEF2FF;color:#4A6CF7;font-weight:600}
+.op-filter-item input[type=checkbox]{width:14px;height:14px;accent-color:#4A6CF7}
+
+.bell{width:32px;height:32px;border-radius:7px;background:#FFEBEE;border:1px solid #FFCDD2;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;position:relative;animation:bP 2s ease-in-out infinite}
+.bell::after{content:'2';position:absolute;top:-3px;right:-3px;background:#E53935;color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+@keyframes bP{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(229,57,53,.1)}}
+
+/* search results highlight */
+.srch-match{background:#FFF9C4}
+
+/* ── CONTENT ── */
+.content-wrap{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.content-wrap::-webkit-scrollbar{width:4px}
+.content-wrap::-webkit-scrollbar-thumb{background:#D4DAE8;border-radius:2px}
+
+/* no-results */
+.no-results{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:#BCC8DC;gap:10px}
+.no-results.show{display:flex}
+.no-results .nr-icon{font-size:44px;opacity:.4}
+.no-results .nr-text{font-size:14px}
+
+/* ═════════════════════════════════════════════
+   ORDER CARD
+═════════════════════════════════════════════ */
+.oc{background:#fff;border:1px solid #E2E6F0;border-radius:12px;overflow:hidden;transition:box-shadow .15s}
+.oc:hover{box-shadow:0 2px 12px rgba(26,35,64,.07)}
+.oc.urgent{border-color:#FFCDD2;box-shadow:0 0 0 2px rgba(229,57,53,.06)}
+.oc.warning{border-color:#FFE082}
+.oc[data-hidden="true"]{display:none!important}
+
+/* card header */
+.oc-hd{display:flex;align-items:center;gap:9px;padding:9px 14px;background:#FAFBFD;border-bottom:1px solid #EEF0F8}
+.oc-id{font-family:monospace;font-size:13px;font-weight:700;color:#4A6CF7;background:#EEF2FF;padding:2px 8px;border-radius:5px}
+.oc-ts{font-size:11px;color:#9AABCC}
+.oc-op{font-size:11px;color:#BCC8DC}
+.oc-badge{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.b-new{background:#E3F2FD;color:#1565C0}.b-new::before{content:'●';color:#2196F3}
+.b-acc{background:#E8F5E9;color:#2E7D32}.b-acc::before{content:'●';color:#4CAF50}
+.b-cook{background:#FFF8E1;color:#7A5000}.b-cook::before{content:'●';color:#FFC107}
+.b-rdy{background:#FFF3E0;color:#E65100}.b-rdy::before{content:'●';color:#FF6D00}
+.b-tr{background:#E3F2FD;color:#1565C0}.b-tr::before{content:'●';color:#2196F3;animation:blink .8s infinite}
+.b-done{background:#E8F5E9;color:#2E7D32}.b-done::before{content:'●';color:#43A047}
+.b-risk{background:#FFF3E0;color:#E65100}.b-risk::before{content:'●';color:#FF9800;animation:blink 1s infinite}
+.b-inc{background:#FFEBEE;color:#C62828}.b-inc::before{content:'●';color:#F44336;animation:blink .5s infinite}
+.b-cx{background:#EEF0F8;color:#546E7A}.b-cx::before{content:'●';color:#90A4AE}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* card body = two columns */
+.oc-body{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #EEF0F8}
+
+/* column */
+.col{padding:0}
+.col:first-child{border-right:1px solid #EEF0F8}
+
+/* col header */
+.col-hd{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px 7px;
+  border-bottom:1px solid #EEF0F8;
+  background:#F8F9FC;
+}
+.col-hd-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.col-hd-icon.rest{background:#FFF3E0}
+.col-hd-icon.cust{background:#E3F2FD}
+.col-hd-name{font-size:13px;font-weight:700;color:#1A2340}
+.col-hd-status{margin-left:auto;font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px}
+.st-online{background:#E8F5E9;color:#2E7D32}
+.st-busy{background:#FFF9C4;color:#827717}
+.st-offline{background:#FFEBEE;color:#C62828}
+
+/* field rows inside column */
+.frow{display:flex;align-items:flex-start;gap:0;border-bottom:1px solid #F3F5FA}
+.frow:last-child{border-bottom:none}
+.fkey{
+  width:130px;flex-shrink:0;
+  font-size:11px;font-weight:600;letter-spacing:.04em;color:#9AABCC;
+  padding:8px 8px 8px 14px;
+  border-right:1px solid #F3F5FA;
+  line-height:1.35;
+  align-self:center;
+}
+.fval{
+  flex:1;padding:8px 14px 8px 10px;
+  font-size:13px;font-weight:500;color:#1A2340;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:32px;
+}
+.fval.mono{font-family:monospace;font-size:12px}
+.fval.orange{color:#D84315;font-weight:700}
+.fval.green{color:#2E7D32}
+.fval.yellow{color:#E65100}
+.fval.red{color:#C62828}
+.fval.dim{color:#8896B3;font-weight:400;font-size:12px}
+.fval.plan{color:#1565C0;font-family:monospace;font-size:12px}
+.fval.fact{color:#2E7D32;font-family:monospace;font-size:12px}
+.fval.bold{font-weight:700}
+
+/* inline call button */
+.cbtn{display:inline-flex;align-items:center;gap:3px;background:#E8F5E9;border:1px solid #C8E6C9;color:#2E7D32;font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;cursor:pointer;transition:all .12s;font-family:'Inter',sans-serif;white-space:nowrap;position:relative}
+.cbtn:hover{background:#C8E6C9}
+.cbtn.blue{background:#E3F2FD;border-color:#BBDEFB;color:#1565C0}
+.cbtn .dd{display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid #E2E6F0;border-radius:8px;box-shadow:0 4px 16px rgba(26,35,64,.1);min-width:210px;padding:4px 0;margin-top:2px}
+.cbtn:hover .dd{display:block}
+.ddi{display:flex;align-items:center;gap:8px;padding:7px 11px;font-size:12px;cursor:pointer;transition:background .1s}
+.ddi:hover{background:#F5F7FC}
+.ddi-n{font-weight:600;flex:1;color:#1A2340}
+.ddi-s{font-size:10px;color:#8896B3}
+.ddi-p{font-size:11px;color:#4A6CF7;font-family:monospace}
+.mapbtn{display:inline-flex;align-items:center;gap:3px;background:#E3F2FD;border:1px solid #BBDEFB;color:#1565C0;font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif}
+.editbtn{background:none;border:none;color:#C0CADC;font-size:13px;cursor:pointer;padding:0 2px;transition:color .12s;line-height:1}
+.editbtn:hover{color:#4A6CF7}
+
+/* ── NOTES BLOCK ── */
+.notes-block{padding:10px 14px 12px;border-top:1px solid #EEF0F8}
+.notes-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.notes-title{font-size:10px;font-weight:700;letter-spacing:.07em;color:#9AABCC;text-transform:uppercase}
+.notes-add-btn{font-size:11px;font-weight:600;color:#4A6CF7;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif}
+.notes-add-btn:hover{text-decoration:underline}
+.note-list{display:flex;flex-direction:column;gap:5px}
+.note-item{background:#F5F7FC;border:1px solid #EEF0F8;border-radius:7px;padding:7px 10px}
+.note-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.note-av{width:20px;height:20px;border-radius:50%;background:#E3E8FF;color:#4A6CF7;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.note-who{font-size:11px;font-weight:600;color:#4A6CF7}
+.note-ts{font-size:10px;color:#BCC8DC}
+.note-txt{font-size:12px;color:#3A4A6B}
+.note-form{margin-top:7px;display:flex;gap:6px}
+.note-inp{flex:1;padding:6px 9px;border:1.5px solid #D8DEF0;border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;color:#1A2340;outline:none;resize:none;height:32px;transition:border-color .12s;line-height:1.4}
+.note-inp:focus{border-color:#4A6CF7;height:54px}
+.note-sub{padding:6px 12px;background:#4A6CF7;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0}
+.note-sub:hover{background:#3B5CE0}
+
+/* ── SLA ROW ── */
+.sla-row{padding:8px 14px;display:flex;align-items:center;gap:10px;background:#FAFBFD;border-top:1px solid #EEF0F8}
+.sla-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;color:#BCC8DC;text-transform:uppercase;white-space:nowrap}
+.sla-track{flex:1;height:5px;background:#EEF0F8;border-radius:3px;overflow:hidden}
+.sla-fill{height:100%;border-radius:3px}
+.sf-ok{background:linear-gradient(90deg,#66BB6A,#43A047)}
+.sf-warn{background:linear-gradient(90deg,#FFB300,#FF8F00)}
+.sf-crit{background:#EF5350;animation:sfB .7s infinite}
+@keyframes sfB{0%,100%{opacity:1}50%{opacity:.35}}
+.sla-val{font-family:monospace;font-size:16px;font-weight:700;min-width:46px;text-align:right}
+.sv-ok{color:#43A047}.sv-warn{color:#E65100}.sv-crit{color:#E53935}
+
+/* ── CTRL CALL ── */
+.ctrl-call{margin:0 14px 10px;display:flex;align-items:center;gap:8px;background:#FFF9C4;border:1px solid #FFE082;border-left:3px solid #FFC107;border-radius:7px;padding:8px 12px;animation:ccA 1.6s ease-in-out infinite;cursor:pointer}
+@keyframes ccA{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px rgba(255,193,7,.2)}}
+.ctrl-call.done{background:#E8F5E9;border-color:#C8E6C9;border-left-color:#43A047;animation:none}
+.ctrl-call input{width:15px;height:15px;accent-color:#43A047;cursor:pointer;flex-shrink:0}
+.ctrl-call label{font-size:12px;font-weight:600;color:#5D4037;cursor:pointer}
+.ctrl-call.done label{color:#2E7D32}
+
+/* ── PAST THREATS ── */
+.past-threats{margin:0 14px 8px;background:#FFF8E1;border:1px solid #FFE082;border-left:3px solid #FF9800;border-radius:7px;padding:6px 11px}
+.pt-hd{font-size:11px;font-weight:700;color:#E65100;display:flex;align-items:center;justify-content:space-between}
+.pt-link{font-size:11px;color:#4A6CF7;cursor:pointer;font-weight:600}
+.pt-link:hover{text-decoration:underline}
+.pt-item{font-size:11px;color:#6D4C41;margin-top:3px}
+
+/* ── PHOTO STRIP ── */
+.photo-strip{padding:9px 14px;display:flex;gap:14px;border-top:1px solid #EEF0F8;flex-wrap:wrap}
+.pg-lbl{font-size:10px;font-weight:700;letter-spacing:.05em;color:#9AABCC;text-transform:uppercase;margin-bottom:5px}
+.pthumbs{display:flex;gap:5px}
+.pth{width:64px;height:48px;border-radius:7px;background:#F0F2F8;border:1.5px solid #E0E4EC;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .12s;position:relative}
+.pth:hover{border-color:#4A6CF7}
+.pth .pts{font-size:9px;color:#B0BACC;margin-top:1px}
+.pth.ok{border-color:#C8E6C9;background:#F1F8E9}
+.pth.ok::after{content:'✓';position:absolute;top:2px;right:4px;font-size:9px;color:#43A047;font-weight:700}
+.pth.wait{border-style:dashed}
+
+/* ── GPS ── */
+.gps-box{margin:0 14px 12px;border-radius:9px;overflow:hidden;border:1px solid #E0E4EC;position:relative;height:100px;background:#E8EDF5}
+.gps-grid{position:absolute;inset:0;background:linear-gradient(rgba(160,175,205,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(160,175,205,.18) 1px,transparent 1px);background-size:18px 18px;background-color:#E8EDF5}
+.gps-rh{position:absolute;left:0;right:0;height:5px;background:#fff;opacity:.7}
+.gps-rv{position:absolute;top:0;bottom:0;width:5px;background:#fff;opacity:.7}
+.gps-car{position:absolute;width:22px;height:22px;background:#4A6CF7;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 2px 5px rgba(74,108,247,.35);animation:gM 5s ease-in-out infinite;z-index:2}
+@keyframes gM{0%,100%{left:50%;top:35%}50%{left:56%;top:29%}}
+.gps-dest{position:absolute;width:12px;height:12px;background:#E53935;border-radius:50%;border:2px solid #fff;right:17%;top:17%;z-index:2}
+.gps-lbl{position:absolute;bottom:5px;left:9px;font-size:9px;color:#5A6B8A;font-family:monospace;font-weight:600}
+.gps-exp{position:absolute;top:5px;right:5px;background:rgba(255,255,255,.9);border:1px solid #E2E6F0;border-radius:4px;padding:2px 7px;font-size:10px;color:#4A6CF7;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* ── SLOT TIMER ── */
+.slot-timer{display:inline-flex;align-items:center;background:#E3F2FD;border:1px solid #BBDEFB;color:#1565C0;font-family:monospace;font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px}
+.slot-timer.crit{background:#FFEBEE;border-color:#FFCDD2;color:#C62828;animation:sfB .8s infinite}
+
+/* ── DELIVERY PROOF ── */
+.dp-row{display:flex;align-items:center;gap:14px;padding:9px 14px;border-top:1px solid #EEF0F8;flex-wrap:wrap;background:#FAFBFD}
+.dp-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;color:#9AABCC;text-transform:uppercase;margin-bottom:3px}
+.dp-eval{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
+.dp-ok{background:#E8F5E9;color:#2E7D32}.dp-late{background:#FFEBEE;color:#C62828}
+
+/* ── INCIDENT BANNER ── */
+.inc-banner{margin:9px 14px 3px;background:#FFF8E1;border:1px solid #FFE082;border-left:4px solid #FF9800;border-radius:8px;padding:8px 12px;display:flex;align-items:flex-start;gap:8px}
+.inc-banner.crit{background:#FFEBEE;border-color:#FFCDD2;border-left-color:#F44336;animation:ibP 1.5s infinite}
+@keyframes ibP{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px rgba(244,67,54,.15)}}
+.ib-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.ib-title{font-size:13px;font-weight:700;color:#BF360C}
+.ib-sub{font-size:11px;color:#6D4C41;margin-top:2px}
+.inc-banner.crit .ib-title{color:#B71C1C}
+
+/* ── INCIDENT LOG ── */
+.inc-log{padding:8px 14px 10px;border-top:1px solid #EEF0F8}
+.inc-log-hd{font-size:10px;font-weight:700;letter-spacing:.07em;color:#9AABCC;text-transform:uppercase;margin-bottom:6px}
+.log-entry{display:flex;gap:7px;padding:5px 0;border-bottom:1px solid #F5F7FC}
+.log-entry:last-child{border-bottom:none}
+.log-av{width:22px;height:22px;border-radius:50%;background:#E3E8FF;color:#4A6CF7;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+.log-m{font-size:10px;color:#BCC8DC}.log-who{font-weight:600;color:#4A6CF7}
+.log-txt{font-size:12px;color:#3A4A6B;margin-top:1px}
+.log-add{display:flex;gap:5px;margin-top:6px}
+.log-inp{flex:1;padding:5px 8px;border:1.5px solid #D8DEF0;border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;outline:none;resize:none;height:30px;transition:border-color .12s}
+.log-inp:focus{border-color:#4A6CF7}
+
+/* ── REFUND BAR ── */
+.refund-bar{margin:8px 14px;background:#EDE7F6;border:1px solid #D1C4E9;border-radius:7px;padding:8px 11px;display:flex;align-items:center;gap:9px}
+.refund-status{margin-left:auto;font-size:11px;font-weight:700;background:#fff;color:#6A1B9A;padding:2px 8px;border-radius:5px}
+
+/* ── ACTION ROW ── */
+.oc-actions{padding:10px 14px;border-top:1px solid #EEF0F8;display:flex;flex-wrap:wrap;gap:7px;align-items:center;background:#FAFBFD}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn-primary{background:#4A6CF7;color:#fff}.btn-primary:hover{background:#3B5CE0}
+.btn-orange{background:#E65100;color:#fff}.btn-orange:hover{background:#BF360C}
+.btn-ghost{background:#fff;color:#607090;border-color:#D8DEF0}.btn-ghost:hover{background:#F5F7FC;color:#1A2340}
+.btn-green{background:#E8F5E9;color:#2E7D32;border-color:#C8E6C9}.btn-green:hover{background:#C8E6C9}
+.btn-danger{background:#FFEBEE;color:#C62828;border-color:#FFCDD2}.btn-danger:hover{background:#FFCDD2}
+.btn-warn{background:#FFF3E0;color:#E65100;border-color:#FFE0B2}.btn-warn:hover{background:#FFE0B2}
+.btn-esc{background:#F3E5F5;color:#6A1B9A;border-color:#E1BEE7}.btn-esc:hover{background:#E1BEE7}
+.more-wrap{position:relative}
+.more-btn{background:#F0F2F8;color:#607090;border:1px solid #E0E4EC;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:7px 11px;border-radius:7px;cursor:pointer;transition:all .12s}
+.more-btn:hover{background:#E4E8F4}
+.more-menu{display:none;position:absolute;bottom:calc(100% + 4px);left:0;background:#fff;border:1px solid #E2E6F0;border-radius:9px;box-shadow:0 -4px 16px rgba(26,35,64,.1);padding:4px 0;min-width:190px;z-index:50}
+.more-wrap:hover .more-menu{display:block}
+.more-item{display:flex;align-items:center;gap:8px;padding:8px 13px;font-size:12px;color:#E53935;cursor:pointer;transition:background .1s;font-weight:500}
+.more-item:hover{background:#FFF0F0}
+
+/* ── PANELS ── */
+.panel{display:none;flex-direction:column;flex:1;overflow:hidden}
+.panel.active{display:flex}
+
+/* ═════════════════════════════════════════════
+   MODALS
+═════════════════════════════════════════════ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,20,40,.5);z-index:1000;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:420px;box-shadow:0 16px 48px rgba(26,35,64,.2);position:relative;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:12px;color:#8896B3;margin-bottom:16px}
+.modal-lbl{font-size:12px;font-weight:600;color:#607090;margin-bottom:5px}
+.modal-sel{width:100%;padding:8px 10px;border:1.5px solid #D8DEF0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;margin-bottom:12px;cursor:pointer;transition:border-color .12s;background:#fff}
+.modal-sel:focus{border-color:#4A6CF7}
+.modal-ta{width:100%;padding:8px 10px;border:1.5px solid #D8DEF0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:none;height:60px;margin-bottom:14px;transition:border-color .12s}
+.modal-ta:focus{border-color:#4A6CF7}
+.modal-ta::placeholder{color:#BCC8DC}
+.modal-close{position:absolute;top:13px;right:14px;background:none;border:none;font-size:18px;color:#BCC8DC;cursor:pointer;line-height:1}
+.modal-close:hover{color:#1A2340}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end}
+
+/* MAP MODAL */
+.map-modal{width:560px;padding:0;overflow:hidden}
+.map-modal-hd{padding:16px 20px;border-bottom:1px solid #EEF0F8;display:flex;align-items:center;justify-content:space-between}
+.map-modal-hd h3{font-size:15px;font-weight:700}
+.map-canvas{position:relative;height:320px;background:#E8EDF5;overflow:hidden}
+.map-canvas .mc-grid{position:absolute;inset:0;background:linear-gradient(rgba(160,180,210,.2) 1px,transparent 1px),linear-gradient(90deg,rgba(160,180,210,.2) 1px,transparent 1px);background-size:24px 24px;background-color:#E4EAF5}
+.map-canvas .mc-rh{position:absolute;left:0;right:0;height:8px;background:#fff;opacity:.75}
+.map-canvas .mc-rv{position:absolute;top:0;bottom:0;width:8px;background:#fff;opacity:.75}
+.map-canvas .mc-block{position:absolute;background:rgba(200,210,230,.4);border-radius:3px}
+.mc-pin{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:3}
+.mc-pin-body{width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.mc-pin-body span{transform:rotate(45deg);font-size:13px}
+.mc-pin-lbl{font-size:10px;font-weight:700;color:#1A2340;margin-top:3px;white-space:nowrap}
+.pin-red .mc-pin-body{background:#F44336}
+.pin-blue .mc-pin-body{background:#4A6CF7}
+.mc-cursor{position:absolute;width:18px;height:18px;border:3px solid #4A6CF7;border-radius:50%;background:rgba(74,108,247,.2);transform:translate(-50%,-50%);pointer-events:none;z-index:4;display:none}
+.mc-cursor.show{display:block}
+.mc-new-pin{position:absolute;display:flex;flex-direction:column;align-items:center;z-index:5;display:none}
+.mc-new-pin.show{display:flex}
+.mc-new-body{width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#43A047;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(67,160,71,.4)}
+.mc-new-body span{transform:rotate(45deg);font-size:11px}
+.map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(26,35,64,.75);color:#fff;font-size:11px;padding:5px 12px;border-radius:20px;pointer-events:none;font-family:'Inter',sans-serif}
+.map-modal-body{padding:14px 20px}
+.map-addr-input{width:100%;padding:9px 11px;border:1.5px solid #D8DEF0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .12s;margin-bottom:10px}
+.map-addr-input:focus{border-color:#4A6CF7}
+.map-modal-footer{padding:0 20px 16px;display:flex;gap:8px;justify-content:flex-end}
+
+/* ALERT POPUP */
+.alert-modal{background:#fff;border-radius:14px;width:390px;overflow:hidden;box-shadow:0 16px 48px rgba(26,35,64,.2)}
+.alert-hd{padding:16px 18px 12px;display:flex;align-items:flex-start;gap:12px}
+.alert-hd.warn{background:linear-gradient(135deg,#FFF8E1,#FFF3E0)}
+.alert-hd.crit{background:linear-gradient(135deg,#FFF0F0,#FFEBEE)}
+.alert-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.alert-icon.warn{background:#FFE082}.alert-icon.crit{background:#FFCDD2}
+.alert-title{font-size:14px;font-weight:700;color:#1A2340;margin-bottom:3px}
+.alert-sub{font-size:12px;color:#6D4C41}
+.alert-body{padding:12px 18px 14px}
+.alert-info{background:#F5F7FC;border:1px solid #EEF0F8;border-radius:8px;padding:9px 13px;margin-bottom:11px;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.ai-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;color:#9AABCC;text-transform:uppercase;margin-bottom:1px}
+.ai-val{font-size:12px;font-weight:600;color:#1A2340}
+.alert-timer-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.alert-timer-lbl{font-size:11px;color:#8896B3;flex:1}
+.alert-timer-val{font-family:monospace;font-size:18px;font-weight:700}
+.atv-warn{color:#E65100}.atv-crit{color:#E53935;animation:sfB .6s infinite}
+.alert-footer{display:flex;gap:7px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:16px;right:16px;background:#1A2340;color:#fff;font-size:13px;font-weight:500;padding:10px 14px;border-radius:10px;display:flex;align-items:center;gap:7px;box-shadow:0 5px 20px rgba(26,35,64,.28);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;pointer-events:none;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ LEFT NAV ═══════════════════════════════════════ -->
+<div class="leftnav">
+  <div class="lnav-logo">T</div>
+  <div class="lnav-item" title="Дашборд">📊</div>
+  <div class="lnav-item active" title="Заказы">📋<span class="lnav-badge">8</span></div>
+  <div class="lnav-sep"></div>
+  <div class="lnav-item" title="Слоты">🕐</div>
+  <div class="lnav-item" title="Мерчанты">🏪</div>
+  <div class="lnav-item" title="Точки">📍</div>
+  <div class="lnav-item" title="Курьеры">🚴</div>
+  <div class="lnav-sep"></div>
+  <div class="lnav-item" title="Витрина">🛍</div>
+  <div class="lnav-item" title="Клиенты">👤</div>
+  <div class="lnav-item" title="Финансы">💰</div>
+  <div class="lnav-item" title="Справочники">📚</div>
+  <div class="lnav-bottom"><div class="userav" title="Алишер М. · Оператор">АМ</div></div>
+</div>
+
+<!-- ═══ OP SIDEBAR ═════════════════════════════════════ -->
+<div class="opsidebar">
+  <div class="opsidebar-head">
+    <div class="opsidebar-title">Дашборд оператора</div>
+    <div class="opsidebar-clk" id="opClk">--:--</div>
+  </div>
+  <div class="opsidebar-body">
+    <div class="grp-lbl">Активные</div>
+    <div class="otab active" onclick="goTab('new',this)"><div class="tab-dot" style="background:#2196F3;box-shadow:0 0 4px #2196F3"></div><span class="otn">Новые</span><span class="otc c-bl">3</span></div>
+    <div class="otab" onclick="goTab('accepted',this)"><div class="tab-dot" style="background:#FF9800"></div><span class="otn">Принято рестораном</span><span class="otc c-or">5</span></div>
+    <div class="otab" onclick="goTab('cooking',this)"><div class="tab-dot" style="background:#FFC107;box-shadow:0 0 4px #FFC107"></div><span class="otn">Готовится</span><span class="otc c-ye">4</span></div>
+    <div class="otab" onclick="goTab('ready',this)"><div class="tab-dot" style="background:#FF6D00"></div><span class="otn">Готово к отправке</span><span class="otc c-or">2</span></div>
+    <div class="otab" onclick="goTab('transit',this)"><div class="tab-dot" style="background:#1E88E5"></div><span class="otn">В пути</span><span class="otc c-bl">6</span></div>
+    <div class="otab" onclick="goTab('done',this)"><div class="tab-dot" style="background:#43A047"></div><span class="otn">Завершено</span><span class="otc c-gr">14</span></div>
+    <div class="grp-lbl">Тревога</div>
+    <div class="otab by" onclick="goTab('risk',this)"><div class="tab-dot" style="background:#FF9800;box-shadow:0 0 5px #FF9800"></div><span class="otn">Угроза ⚠️</span><span class="otc c-ye">1</span></div>
+    <div class="otab br" onclick="goTab('incident',this)"><div class="tab-dot" style="background:#F44336;box-shadow:0 0 5px #F44336"></div><span class="otn">Инцидент 🚨</span><span class="otc c-re">1</span></div>
+    <div class="otab" onclick="goTab('cancelling',this)"><div class="tab-dot" style="background:#90A4AE"></div><span class="otn">Отменяется</span><span class="otc c-gy">2</span></div>
+    <div class="otab" onclick="goTab('cancelled',this)"><div class="tab-dot" style="background:#795548"></div><span class="otn">Отменено</span><span class="otc c-gy">3</span></div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══════════════════════════════════════════ -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="panel-title" id="panelTitle">Новые заказы</span>
+    <span class="panel-sub" id="panelSub">SLA 15 мин на подтверждение</span>
+    <div class="shift-p">☀ Смена 1 · 05:00–12:00</div>
+    <div class="clk-p" id="mainClk">--:--:--</div>
+    <div class="topbar-right">
+      <!-- SEARCH -->
+      <div class="srch-box">
+        <span class="srch-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Поиск: ID, ресторан, клиент, телефон..." oninput="doSearch(this.value)">
+        <span class="srch-clear" id="srchClear" onclick="clearSearch()">✕</span>
+      </div>
+      <!-- OP FILTER -->
+      <div class="op-filter-wrap" id="opFilterWrap">
+        <button class="filter-btn" id="opFilterBtn" onclick="toggleOpFilter()">👤 Оператор ▾</button>
+        <div class="op-filter-menu" id="opFilterMenu">
+          <div class="op-filter-item sel" onclick="toggleOpSelect(this,'all')"><input type="checkbox" checked> Все операторы</div>
+          <div class="op-filter-item" onclick="toggleOpSelect(this,'am')"><input type="checkbox"> Алишер М.</div>
+          <div class="op-filter-item" onclick="toggleOpSelect(this,'nk')"><input type="checkbox"> Нилуфар К.</div>
+          <div class="op-filter-item" onclick="toggleOpSelect(this,'jt')"><input type="checkbox"> Жасур Т.</div>
+          <div class="op-filter-item" onclick="toggleOpSelect(this,'dh')"><input type="checkbox"> Диёр Х.</div>
+        </div>
+      </div>
+      <div class="bell" onclick="toast('2 активных инцидента!','red')">🔔</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: НОВЫЕ
+  ══════════════════════════════════════ -->
+  <div class="panel active" id="panel-new">
+    <div class="content-wrap" id="cw-new">
+
+      <!-- ── CARD TG-2847 ── -->
+      <div class="oc urgent" data-id="TG-2847" data-rest="Osh Mahali" data-client="Азиз Каримов" data-phone="+998901234567" data-op="am">
+        <div class="oc-hd">
+          <span class="oc-id">#TG-2847</span>
+          <span class="oc-ts">13.05.2026, 09:18</span>
+          <span class="oc-op">· Алишер М.</span>
+          <span class="oc-badge b-new">Новый</span>
+        </div>
+        <div class="oc-body">
+          <!-- РЕСТОРАН -->
+          <div class="col">
+            <div class="col-hd">
+              <div class="col-hd-icon rest">🏪</div>
+              <div>
+                <div class="col-hd-name">Osh Mahali</div>
+              </div>
+              <span class="col-hd-status st-online">● Онлайн</span>
+            </div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval">
+              <div class="cbtn">📞 Звонок ▾<div class="dd">
+                <div class="ddi"><span class="ddi-n">Акбар (директор)</span><span class="ddi-s">🟢</span><span class="ddi-p">+99871 234-56-78</span></div>
+                <div class="ddi"><span class="ddi-n">Заур (повар)</span><span class="ddi-s">🟡 Занят</span><span class="ddi-p">+99890 111-22-33</span></div>
+              </div></div>
+            </div></div>
+            <div class="frow"><div class="fkey">Принято</div><div class="fval dim">Ожидание...</div></div>
+            <div class="frow"><div class="fkey">Начало готовки</div><div class="fval plan">10:00 (план)</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче</div><div class="fval plan">11:30 (план)</div></div>
+            <div class="notes-block">
+              <div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2847-rest')">+ Добавить</button></div>
+              <div class="note-list" id="n-2847-rest"></div>
+              <div class="note-form" id="nf-2847-rest" style="display:none"><textarea class="note-inp" id="ni-2847-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2847-rest')">+</button></div>
+            </div>
+          </div>
+          <!-- КЛИЕНТ -->
+          <div class="col">
+            <div class="col-hd">
+              <div class="col-hd-icon cust">👤</div>
+              <div><div class="col-hd-name">Азиз Каримов</div></div>
+            </div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞 +998 90 123-45-67','green')">📞 +998 90 123-45-67</span></div></div>
+            <div class="frow"><div class="fkey">Тел. доп.</div><div class="fval"><span class="cbtn blue" onclick="toast('📞 +998 93 765-43-21','green')">📞 +998 93 765-43-21</span></div></div>
+            <div class="frow"><div class="fkey">Адрес доставки</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> ул. Навои 47, кв. 12 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono orange">14.05 · 12:00–13:30</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">485 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 15 кг, Лагман × 5 л, Самса × 2 дюж.</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Свадьба. 120 гостей. Въезд со двора.</div></div>
+          </div>
+        </div>
+        <!-- SLA -->
+        <div class="sla-row">
+          <span class="sla-lbl">SLA до принятия</span>
+          <div class="sla-track"><div class="sla-fill sf-crit" style="width:10%" id="sla-f-1"></div></div>
+          <span class="sla-val sv-crit" id="sla-v-1">01:22</span>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-ghost" onclick="openMapModal()">📍 Изменить адрес</button>
+          <button class="btn btn-orange" onclick="openForce('TG-2847','Принято рестораном')">✓ Принято</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2847')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2847')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+
+      <!-- ── CARD TG-2848 ── -->
+      <div class="oc" data-id="TG-2848" data-rest="Navruz Osh" data-client="Шахло Рашидова" data-phone="+998914567890" data-op="nk">
+        <div class="oc-hd">
+          <span class="oc-id">#TG-2848</span>
+          <span class="oc-ts">13.05.2026, 09:24</span>
+          <span class="oc-op">· Нилуфар К.</span>
+          <span class="oc-badge b-new">Новый</span>
+        </div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Navruz Osh</div></div><span class="col-hd-status st-online">● Онлайн</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><span class="cbtn" onclick="toast('📞 Navruz Osh','green')">📞 Звонок</span></div></div>
+            <div class="frow"><div class="fkey">Принято</div><div class="fval dim">Ожидание...</div></div>
+            <div class="frow"><div class="fkey">Начало готовки</div><div class="fval plan">08:30 (план)</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче</div><div class="fval plan">10:00 (план)</div></div>
+            <div class="notes-block"><div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2848-rest')">+ Добавить</button></div><div class="note-list" id="n-2848-rest"></div><div class="note-form" id="nf-2848-rest" style="display:none"><textarea class="note-inp" id="ni-2848-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2848-rest')">+</button></div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Шахло Рашидова</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞 +998 91 456-78-90','green')">📞 +998 91 456-78-90</span></div></div>
+            <div class="frow"><div class="fkey">Тел. доп.</div><div class="fval dim">—</div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> пр. Амира Темура 107 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">14.05 · 10:30–12:00</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">320 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Нарын × 8 кг, Манты × 4 дюж.</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Суннат туй.</div></div>
+          </div>
+        </div>
+        <div class="sla-row"><span class="sla-lbl">SLA</span><div class="sla-track"><div class="sla-fill sf-ok" style="width:72%"></div></div><span class="sla-val sv-ok">10:44</span></div>
+        <div class="oc-actions">
+          <button class="btn btn-ghost" onclick="openMapModal()">📍 Изменить адрес</button>
+          <button class="btn btn-orange" onclick="openForce('TG-2848','Принято рестораном')">✓ Принято</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2848')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2848')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+
+      <!-- no results -->
+      <div class="no-results" id="nr-new"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: ПРИНЯТО РЕСТОРАНОМ
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-accepted">
+    <div class="content-wrap" id="cw-accepted">
+      <div class="oc" data-id="TG-2845" data-rest="Navruz Osh" data-client="Беруни Ахмедов" data-phone="+998993456789" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2845</span><span class="oc-ts">13.05.2026, 09:05</span><span class="oc-op">· Алишер М.</span><span class="oc-badge b-acc">Принято рестораном</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Navruz Osh</div></div><span class="col-hd-status st-online">● Онлайн</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><div class="cbtn">📞 ▾<div class="dd"><div class="ddi"><span class="ddi-n">Умид (менеджер)</span><span class="ddi-s">🟢</span><span class="ddi-p">+998 71 200-11-22</span></div></div></div></div></div>
+            <div class="frow"><div class="fkey">Принято в</div><div class="fval fact">09:09 ✓</div></div>
+            <div class="frow"><div class="fkey">Начало готовки</div><div class="fval plan">11:00 (план)</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче</div><div class="fval plan">13:45 (план)</div></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval green">Бобур Н.</div></div>
+            <div class="notes-block"><div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2845-rest')">+ Добавить</button></div>
+              <div class="note-list" id="n-2845-rest"><div class="note-item"><div class="note-meta"><div class="note-av">АМ</div><span class="note-who">Алишер М.</span><span class="note-ts">09:10</span></div><div class="note-txt">Ресторан принял по звонку.</div></div></div>
+              <div class="note-form" id="nf-2845-rest" style="display:none"><textarea class="note-inp" id="ni-2845-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2845-rest')">+</button></div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Беруни Ахмедов</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞 клиенту','green')">📞 +998 99 345-67-89</span></div></div>
+            <div class="frow"><div class="fkey">Тел. доп.</div><div class="fval dim">—</div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> ул. Катта Дархон 3 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">14.05 · 14:00–15:30</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">290 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 10 кг, Самса × 2 дюж.</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Корпоратив. Вход с главного.</div></div>
+          </div>
+        </div>
+        <div class="past-threats"><div class="pt-hd">⚠ Прошедшие угрозы <span class="pt-link" onclick="toast('Лог угроз открыт','orange')">Просмотреть лог →</span></div><div class="pt-item">09:12 · Таймаут SLA · Устранено</div></div>
+        <div class="oc-actions">
+          <button class="btn btn-ghost" onclick="openMapModal()">📍 Изменить адрес</button>
+          <button class="btn btn-orange" onclick="openForce('TG-2845','Готовится')">🍳 → Готовится</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2845')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2845')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+      <div class="no-results" id="nr-accepted"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: ГОТОВИТСЯ
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-cooking">
+    <div class="content-wrap" id="cw-cooking">
+      <div class="oc warning" data-id="TG-2831" data-rest="Бухоро Плов" data-client="Нодира Юсупова" data-phone="+998901230000" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2831</span><span class="oc-ts">13.05.2026, 06:55</span><span class="oc-op">· Алишер М.</span><span class="oc-badge b-cook">Готовится</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Бухоро Плов</div></div><span class="col-hd-status st-busy">🟡 Готовит</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><div class="cbtn">📞 ▾<div class="dd"><div class="ddi"><span class="ddi-n">Равшан (шеф)</span><span class="ddi-s">🟢</span><span class="ddi-p">+998 90 777-00-11</span></div></div></div></div></div>
+            <div class="frow"><div class="fkey">Принято в</div><div class="fval fact">07:05 ✓</div></div>
+            <div class="frow"><div class="fkey">Начало (план)</div><div class="fval plan">07:30</div></div>
+            <div class="frow"><div class="fkey">Начало (факт)</div><div class="fval fact">07:32 ✓</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче (план)</div><div class="fval plan">10:45</div></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval green">Фаррух Т.</div></div>
+            <div class="notes-block"><div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2831-rest')">+ Добавить</button></div>
+              <div class="note-list" id="n-2831-rest">
+                <div class="note-item"><div class="note-meta"><div class="note-av">АМ</div><span class="note-who">Алишер М.</span><span class="note-ts">07:33</span></div><div class="note-txt">Шеф предупреждён: доп. упаковка для 20 кг.</div></div>
+                <div class="note-item"><div class="note-meta"><div class="note-av">НК</div><span class="note-who">Нилуфар К.</span><span class="note-ts">08:15</span></div><div class="note-txt">Проверила — готовка в штатном режиме.</div></div>
+              </div>
+              <div class="note-form" id="nf-2831-rest" style="display:none"><textarea class="note-inp" id="ni-2831-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2831-rest')">+</button></div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Нодира Юсупова</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞 клиенту','green')">📞 +998 90 123-00-00</span></div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> ул. Шота Руставели 15 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">13.05 · 11:30–13:00</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">620 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов Фергана × 20 кг, Самса × 3 дюж.</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Корпоратив. Пропуск на КПП.</div></div>
+          </div>
+        </div>
+        <div class="sla-row"><span class="sla-lbl">До выдачи курьеру</span><div class="sla-track"><div class="sla-fill sf-warn" style="width:52%" id="cook-f"></div></div><span class="sla-val sv-warn" id="cook-v">01:18:22</span></div>
+        <div class="ctrl-call" id="ctrlCall" onclick="markCtrl()">
+          <input type="checkbox" id="ctrlChk">
+          <label for="ctrlChk">📞 Сделать контрольный звонок в ресторан</label>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-orange" onclick="openForce('TG-2831','Готово к отправке')">📦 → Готово к отправке</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2831')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2831')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+      <div class="no-results" id="nr-cooking"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: ГОТОВО К ОТПРАВКЕ
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-ready">
+    <div class="content-wrap" id="cw-ready">
+      <div class="oc" data-id="TG-2819" data-rest="Самарканд Плов" data-client="Санжар Исмоилов" data-phone="+998997654321" data-op="jt">
+        <div class="oc-hd"><span class="oc-id">#TG-2819</span><span class="oc-ts">13.05.2026, 06:40</span><span class="oc-op">· Жасур Т.</span><span class="oc-badge b-rdy">Готово к отправке</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Самарканд Плов</div></div><span class="col-hd-status st-online">● Онлайн</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><div class="cbtn">📞 ▾<div class="dd"><div class="ddi"><span class="ddi-n">Мансур (менеджер)</span><span class="ddi-s">🟢</span><span class="ddi-p">+998 71 300-22-44</span></div></div></div></div></div>
+            <div class="frow"><div class="fkey">Принято в</div><div class="fval fact">08:00 ✓</div></div>
+            <div class="frow"><div class="fkey">Начало (факт)</div><div class="fval fact">08:12 ✓</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче (факт)</div><div class="fval fact">08:43 ✓</div></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval green">Бобур Н.</div></div>
+            <div class="notes-block"><div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2819-rest')">+ Добавить</button></div><div class="note-list" id="n-2819-rest"></div><div class="note-form" id="nf-2819-rest" style="display:none"><textarea class="note-inp" id="ni-2819-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2819-rest')">+</button></div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Санжар Исмоилов</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞 +998 99 765-43-21</span></div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> пр. Бунёдкор 44 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">13.05 · 09:00–10:30</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">610 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 18 кг, Манты × 5 дюж.</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Ифтар. Без опозданий!</div></div>
+          </div>
+        </div>
+        <div class="photo-strip">
+          <div><div class="pg-lbl">Фото ресторана</div><div class="pthumbs"><div class="pth ok" onclick="toast('Открытая тогора','blue')"><div>🍲</div><div class="pts">Открытая</div></div><div class="pth ok" onclick="toast('Упакованная','blue')"><div>📦</div><div class="pts">Упакованная</div></div></div></div>
+          <div><div class="pg-lbl">Фото курьера</div><div class="pthumbs"><div class="pth ok" onclick="toast('Салон','blue')"><div>🚗</div><div class="pts">Салон</div></div><div class="pth wait"><div>⏳</div><div class="pts">Ожидание</div></div></div></div>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-ghost" onclick="toast('Вызов логиста…','blue')">📞 Логист</button>
+          <button class="btn btn-warn" onclick="toast('Запрос брака отправлен ресторану','orange')">📷 Брак — ресторану</button>
+          <button class="btn btn-warn" onclick="toast('Запрос брака отправлен курьеру','orange')">📷 Брак — курьеру</button>
+          <button class="btn btn-orange" onclick="openForce('TG-2819','В пути')">🚗 → В пути</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2819')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2819')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+      <div class="no-results" id="nr-ready"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: В ПУТИ
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-transit">
+    <div class="content-wrap" id="cw-transit">
+      <div class="oc" data-id="TG-2811" data-rest="Osh Mahali" data-client="Умид Холматов" data-phone="+998951112233" data-op="dh">
+        <div class="oc-hd"><span class="oc-id">#TG-2811</span><span class="oc-ts">13.05.2026, 06:30</span><span class="oc-op">· Диёр Х.</span><span class="oc-badge b-tr">В пути</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Osh Mahali</div></div><span class="col-hd-status st-online">● Онлайн</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><div class="cbtn">📞 ▾<div class="dd"><div class="ddi"><span class="ddi-n">Акбар</span><span class="ddi-s">🟢</span><span class="ddi-p">+998 71 234-56-78</span></div></div></div></div></div>
+            <div class="frow"><div class="fkey">Принято / Начало</div><div class="fval fact">06:40 / 07:02 ✓</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче (факт)</div><div class="fval fact">08:40 ✓</div></div>
+            <div class="frow"><div class="fkey">Забор курьером</div><div class="fval fact">08:52 ✓</div></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval green">Даврон К. <span class="cbtn" onclick="toast('📞 курьеру','green')">📞</span></div></div>
+            <div class="notes-block"><div class="notes-hd"><span class="notes-title">Примечания</span><button class="notes-add-btn" onclick="openNote('n-2811-rest')">+ Добавить</button></div><div class="note-list" id="n-2811-rest"></div><div class="note-form" id="nf-2811-rest" style="display:none"><textarea class="note-inp" id="ni-2811-rest" placeholder="Примечание..."></textarea><button class="note-sub" onclick="addNote('2811-rest')">+</button></div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Умид Холматов</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞 +998 95 111-22-33</span></div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn" onclick="openMapModal()">🗺</span> ул. Амира Темура 47 <button class="editbtn" onclick="openMapModal()">✏</button></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">13.05 · 09:00–10:30</div></div>
+            <div class="frow"><div class="fkey">До конца слота</div><div class="fval"><span class="slot-timer" id="slotT">47:08</span></div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">540 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 22 кг, Лагман × 6 л</div></div>
+            <div class="frow"><div class="fkey">Комментарий</div><div class="fval dim">Звонить за 15 мин.</div></div>
+          </div>
+        </div>
+        <div class="photo-strip">
+          <div><div class="pg-lbl">Фото ресторана</div><div class="pthumbs"><div class="pth ok" onclick="toast('Открытая','blue')"><div>🍲</div><div class="pts">Откр.</div></div><div class="pth ok" onclick="toast('Упакованная','blue')"><div>📦</div><div class="pts">Упак.</div></div></div></div>
+          <div><div class="pg-lbl">Фото курьера</div><div class="pthumbs"><div class="pth ok" onclick="toast('Салон','blue')"><div>🚗</div><div class="pts">Салон</div></div></div></div>
+        </div>
+        <div class="gps-box">
+          <div class="gps-grid"></div>
+          <div class="gps-rh" style="top:42%"></div><div class="gps-rh" style="top:65%"></div>
+          <div class="gps-rv" style="left:32%"></div><div class="gps-rv" style="left:64%"></div>
+          <div class="gps-car">🚗</div><div class="gps-dest"></div>
+          <div class="gps-lbl">ул. Амира Темура, 47</div>
+          <button class="gps-exp" onclick="toast('Яндекс.Карты — полный экран','blue')">⛶ Развернуть</button>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-green" onclick="openForce('TG-2811','Завершено')">✓ Завершено</button>
+          <button class="btn btn-ghost" onclick="toast('Вызов логиста…','blue')">📞 Логист</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2811')">↑ Эскалация нач. КЦ</button>
+          <div class="more-wrap"><button class="more-btn">⋯ Ещё</button><div class="more-menu"><div class="more-item" onclick="openCancel('TG-2811')">✗ Запрос на отмену</div></div></div>
+        </div>
+      </div>
+      <div class="no-results" id="nr-transit"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: ЗАВЕРШЕНО ══ -->
+  <div class="panel" id="panel-done">
+    <div class="content-wrap" id="cw-done">
+      <div class="oc" data-id="TG-2801" data-rest="Бухоро Плов" data-client="Фирдавс Нурматов" data-phone="+998901110000" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2801</span><span class="oc-ts">Доставлен: 13.05.2026, 08:55</span><span class="oc-badge b-done">✓ Завершено</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Бухоро Плов</div></div></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞</span></div></div>
+            <div class="frow"><div class="fkey">Принято / Начало</div><div class="fval fact">06:00 / 06:05 ✓</div></div>
+            <div class="frow"><div class="fkey">Готов к выдаче</div><div class="fval fact">07:58 ✓</div></div>
+            <div class="frow"><div class="fkey">Забор курьером</div><div class="fval fact">08:05 ✓</div></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval green">Даврон К.</div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Фирдавс Нурматов</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞 +998 90 111-00-00</span></div></div>
+            <div class="frow"><div class="fkey">Адрес</div><div class="fval"><span class="mapbtn">🗺</span> ул. Чиланзар 7/12</div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono">13.05 · 08:00–09:30</div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval orange bold">380 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 12 кг</div></div>
+          </div>
+        </div>
+        <div class="dp-row">
+          <div><div class="dp-lbl">Фото доставки</div><div class="pthumbs"><div class="pth ok" onclick="toast('У клиента','blue')"><div>🏠</div><div class="pts">Клиент</div></div></div></div>
+          <div><div class="dp-lbl">Оценка системы</div><span class="dp-eval dp-ok">✓ Вовремя (08:55)</span></div>
+          <div><div class="dp-lbl">Оценка клиента</div><span style="color:#F59E0B;font-size:16px">★★★★★</span></div>
+        </div>
+        <div class="oc-actions"><button class="btn btn-danger" onclick="toast('Рекламация → Инцидент','red')">🚨 Рекламация → Инцидент</button></div>
+      </div>
+      <div class="no-results" id="nr-done"><div class="nr-icon">🔍</div><div class="nr-text">Заказы не найдены</div></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: УГРОЗА ══ -->
+  <div class="panel" id="panel-risk">
+    <div class="content-wrap">
+      <div class="oc warning" data-id="TG-2839" data-rest="Чайхона №1" data-client="Нодира Юсупова" data-phone="+998901230011" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2839</span><span class="oc-ts">13.05.2026, 07:30</span><span class="oc-op">· Алишер М.</span><span class="oc-badge b-risk">⚠ Угроза</span></div>
+        <div class="inc-banner"><span class="ib-icon">⚠️</span><div><div class="ib-title">Ресторан не начал готовку вовремя</div><div class="ib-sub">Должен был начать в 07:30 · Просрочка 1ч 45м · Слот до 13:30</div></div></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Чайхона №1</div></div><span class="col-hd-status st-busy">🟡 Проблема</span></div>
+            <div class="frow"><div class="fkey">Телефон</div><div class="fval"><div class="cbtn">📞 ▾<div class="dd"><div class="ddi"><span class="ddi-n">Алишер (адм.)</span><span class="ddi-s">🟡</span><span class="ddi-p">+998 90 500-11-22</span></div></div></div></div></div>
+            <div class="frow"><div class="fkey">Начало (план)</div><div class="fval plan">07:30</div></div>
+            <div class="frow"><div class="fkey">Начало (факт)</div><div class="fval red">Не начато ✗</div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Нодира Юсупова</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞</span></div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono yellow">13.05 · 12:00–13:30</div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 25 кг — корпоратив</div></div>
+          </div>
+        </div>
+        <div class="inc-log"><div class="inc-log-hd">Лог действий</div>
+          <div id="risk-log"><div class="log-entry"><div class="log-av">АМ</div><div><div class="log-m"><span class="log-who">Алишер М.</span> · 09:15</div><div class="log-txt">Позвонил. Повар опаздывает. Обещают 09:30.</div></div></div></div>
+          <div class="log-add"><textarea class="log-inp" id="risk-inp" placeholder="Добавить запись…"></textarea><button class="btn btn-ghost" style="padding:5px 9px;font-size:11px" onclick="addLog('risk-log','risk-inp')">+</button></div>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-green" onclick="toast('Угроза снята','green')">✓ Угроза миновала</button>
+          <button class="btn btn-danger" onclick="toast('Переведён в Инцидент','red')">🚨 → Инцидент</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2839')">↑ Эскалация нач. КЦ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: ИНЦИДЕНТ ══ -->
+  <div class="panel" id="panel-incident">
+    <div class="content-wrap">
+      <div class="oc urgent" data-id="TG-2802" data-rest="Osh Mahali" data-client="Санжар Исмоилов" data-phone="+998997654321" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2802</span><span class="oc-ts">Авария 13.05.2026, 08:41</span><span class="oc-op">· Алишер М.</span><span class="oc-badge b-inc">🚨 Инцидент</span></div>
+        <div class="inc-banner crit"><span class="ib-icon">🚨</span><div><div class="ib-title">ДТП курьера — доставка заблокирована</div><div class="ib-sub">Выехал 08:52 · Авария · Слот до 09:30 · Просрочка 47 мин</div></div></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Osh Mahali</div></div><span class="col-hd-status st-offline">🔴 ДТП</span></div>
+            <div class="frow"><div class="fkey">Курьер</div><div class="fval red">Жасур А. <span class="cbtn" style="background:#FFEBEE;border-color:#FFCDD2;color:#C62828" onclick="toast('📞 курьеру','red')">📞</span></div></div>
+            <div class="frow"><div class="fkey">Забор курьером</div><div class="fval fact">08:52</div></div>
+            <div class="frow"><div class="fkey">Слот</div><div class="fval mono red">08:00–09:30 ⚠</div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Санжар Исмоилов</div></div></div>
+            <div class="frow"><div class="fkey">Тел. основной</div><div class="fval"><span class="cbtn" onclick="toast('📞','green')">📞</span></div></div>
+            <div class="frow"><div class="fkey">Состав</div><div class="fval dim">Плов × 18 кг, Манты × 4 дюж.</div></div>
+          </div>
+        </div>
+        <div class="inc-log"><div class="inc-log-hd">Лог действий</div>
+          <div id="inc-log">
+            <div class="log-entry"><div class="log-av">АМ</div><div><div class="log-m"><span class="log-who">Алишер М.</span> · 08:42</div><div class="log-txt">ДТП. Курьер в порядке. Тогора в машине.</div></div></div>
+            <div class="log-entry"><div class="log-av">АМ</div><div><div class="log-m"><span class="log-who">Алишер М.</span> · 08:48</div><div class="log-txt">Позвонил клиенту. Ждёт решения.</div></div></div>
+          </div>
+          <div class="log-add"><textarea class="log-inp" id="inc-inp" placeholder="Добавить запись…"></textarea><button class="btn btn-ghost" style="padding:5px 9px;font-size:11px" onclick="addLog('inc-log','inc-inp')">+</button></div>
+        </div>
+        <div class="oc-actions">
+          <button class="btn btn-orange" onclick="toast('Резервный курьер вызван','green')">🚗 Вызвать резерв</button>
+          <button class="btn btn-danger" onclick="openCancel('TG-2802')">💸 Запрос на возврат</button>
+          <button class="btn btn-esc" onclick="openEscModal('TG-2802')">↑ Эскалация нач. КЦ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: ОТМЕНЯЕТСЯ ══ -->
+  <div class="panel" id="panel-cancelling">
+    <div class="content-wrap">
+      <div class="oc" data-id="TG-2788" data-rest="Osh Mahali" data-client="Бахром Т." data-phone="+998901234500" data-op="nk">
+        <div class="oc-hd"><span class="oc-id">#TG-2788</span><span class="oc-ts">12.05.2026, 18:40</span><span class="oc-badge b-cx">⏳ Отменяется</span></div>
+        <div class="refund-bar"><span style="font-size:15px">💳</span><span style="font-size:12px;color:#6A1B9A;font-weight:500">Click возврат: 450 000 UZS · Инициирован 18:42</span><span class="refund-status">Обрабатывается…</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Osh Mahali</div></div></div>
+            <div class="frow"><div class="fkey">Причина отмены</div><div class="fval red">Технический срыв ресторана</div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Бахром Т.</div></div></div>
+            <div class="frow"><div class="fkey">Уведомлён</div><div class="fval green">✓ 18:42</div></div>
+            <div class="frow"><div class="fkey">Сумма возврата</div><div class="fval orange bold">450 000 UZS</div></div>
+          </div>
+        </div>
+        <div class="oc-actions"><button class="btn btn-green" onclick="toast('Подтверждено вручную','green')">✓ Подтвердить отмену вручную</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: ОТМЕНЕНО ══ -->
+  <div class="panel" id="panel-cancelled">
+    <div class="content-wrap">
+      <div class="oc" data-id="TG-2780" data-rest="Osh Mahali" data-client="Азиз Каримов" data-phone="+998901234567" data-op="am">
+        <div class="oc-hd"><span class="oc-id">#TG-2780</span><span class="oc-ts">12.05.2026, 17:30</span><span class="oc-badge b-cx">Отменено</span></div>
+        <div class="oc-body">
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon rest">🏪</div><div><div class="col-hd-name">Osh Mahali · ф-л Чиланзар</div></div></div>
+            <div class="frow"><div class="fkey">Причина</div><div class="fval red">Вина ресторана</div></div>
+            <div class="frow"><div class="fkey">Возврат</div><div class="fval green">✓ Выполнен 17:58</div></div>
+          </div>
+          <div class="col">
+            <div class="col-hd"><div class="col-hd-icon cust">👤</div><div><div class="col-hd-name">Азиз Каримов</div></div></div>
+            <div class="frow"><div class="fkey">Сумма</div><div class="fval dim">485 000 UZS</div></div>
+            <div class="frow"><div class="fkey">Компенсация</div><div class="fval orange">Промокод отправлен</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ═══ MODAL: ПРИНУДИТЕЛЬНЫЙ ПЕРЕХОД ════════════════════ -->
+<div class="overlay" id="forceOv">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOv('forceOv')">✕</button>
+    <h3>Принудительная смена статуса</h3>
+    <div class="modal-sub">Заказ <strong id="fOrdId"></strong> → <strong id="fNewSt" style="color:#2E7D32"></strong></div>
+    <div class="modal-lbl">Причина (обязательно)</div>
+    <select class="modal-sel" id="fReason">
+      <option value="">— Выберите причину —</option>
+      <option>Ресторан подтвердил голосом</option>
+      <option>Технический сбой системы</option>
+      <option>Получено письменное подтверждение</option>
+      <option>Иное (укажите в комментарии)</option>
+    </select>
+    <div class="modal-lbl">Комментарий оператора</div>
+    <textarea class="modal-ta" id="fComment" placeholder="Обязателен для 'Иное'…"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeOv('forceOv')">Отмена</button>
+      <button class="btn btn-orange" onclick="confirmForce()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ЗАПРОС НА ОТМЕНУ ══════════════════════════ -->
+<div class="overlay" id="cancelOv">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOv('cancelOv')">✕</button>
+    <h3>Запрос на отмену заказа</h3>
+    <div class="modal-sub">Заказ <strong id="cOrdId"></strong> · Передаётся начальнику КЦ</div>
+    <div class="modal-lbl">Причина отмены (обязательно)</div>
+    <select class="modal-sel" id="cReason">
+      <option value="">— Выберите причину —</option>
+      <optgroup label="Инициатива клиента">
+        <option>Клиент отказался до начала готовки</option>
+        <option>Клиент не найден при доставке</option>
+        <option>Клиент просит перенос</option>
+      </optgroup>
+      <optgroup label="Проблема ресторана">
+        <option>Ресторан отказал в выполнении</option>
+        <option>Технический срыв на кухне</option>
+        <option>Ресторан не выходит на связь</option>
+      </optgroup>
+      <optgroup label="Логистика">
+        <option>Курьер недоступен / ДТП</option>
+        <option>Превышено время ожидания</option>
+      </optgroup>
+      <optgroup label="Прочее">
+        <option>Технический сбой системы</option>
+        <option>Иное</option>
+      </optgroup>
+    </select>
+    <div class="modal-lbl">Комментарий</div>
+    <textarea class="modal-ta" id="cComment" placeholder="Подробности ситуации…"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeOv('cancelOv')">Отмена</button>
+      <button class="btn" style="background:#E53935;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer" onclick="confirmCancel()">Отправить запрос</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ЭСКАЛАЦИЯ ══════════════════════════════════ -->
+<div class="overlay" id="escOv">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOv('escOv')">✕</button>
+    <h3>Эскалация начальнику КЦ</h3>
+    <div class="modal-sub">Заказ <strong id="eOrdId"></strong></div>
+    <div class="modal-lbl">Тип эскалации (обязательно)</div>
+    <select class="modal-sel" id="eType">
+      <option value="">— Выберите тип —</option>
+      <option>Ресторан не берёт трубку</option>
+      <option>Превышен лимит ожидания (15 мин)</option>
+      <option>Конфликт с клиентом</option>
+      <option>Требуется решение по возврату</option>
+      <option>Технический сбой — нужна помощь IT</option>
+      <option>Критическая ситуация (ДТП, форс-мажор)</option>
+      <option>Иное</option>
+    </select>
+    <div class="modal-lbl">Описание ситуации</div>
+    <textarea class="modal-ta" id="eComment" placeholder="Что произошло? Какое решение нужно?"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeOv('escOv')">Отмена</button>
+      <button class="btn btn-esc" onclick="confirmEsc()" style="margin-left:0">↑ Отправить эскалацию</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: КАРТА — ИЗМЕНИТЬ АДРЕС ═════════════════════ -->
+<div class="overlay" id="mapOv">
+  <div class="modal map-modal">
+    <div class="map-modal-hd">
+      <h3>📍 Выбор точки доставки</h3>
+      <button class="modal-close" style="position:static" onclick="closeOv('mapOv')">✕</button>
+    </div>
+    <div class="map-canvas" id="mapCanvas" onclick="placePin(event)">
+      <div class="mc-grid"></div>
+      <div class="mc-rh" style="top:35%"></div><div class="mc-rh" style="top:58%"></div><div class="mc-rh" style="top:78%"></div>
+      <div class="mc-rv" style="left:25%"></div><div class="mc-rv" style="left:52%"></div><div class="mc-rv" style="left:76%"></div>
+      <!-- city blocks -->
+      <div class="mc-block" style="left:28%;top:10%;width:20%;height:18%"></div>
+      <div class="mc-block" style="left:54%;top:10%;width:18%;height:14%"></div>
+      <div class="mc-block" style="left:28%;top:62%;width:18%;height:13%"></div>
+      <div class="mc-block" style="left:54%;top:62%;width:20%;height:13%"></div>
+      <div class="mc-block" style="left:5%;top:38%;width:16%;height:16%"></div>
+      <!-- existing pin (ресторан) -->
+      <div class="mc-pin pin-blue" style="left:26%;top:8%">
+        <div class="mc-pin-body"><span>🏪</span></div>
+        <div class="mc-pin-lbl">Ресторан</div>
+      </div>
+      <!-- current delivery pin -->
+      <div class="mc-pin pin-red" id="mapCurrentPin" style="left:53%;top:56%">
+        <div class="mc-pin-body"><span>📍</span></div>
+        <div class="mc-pin-lbl">Текущий адрес</div>
+      </div>
+      <!-- new pin (placed by click) -->
+      <div class="mc-new-pin" id="mapNewPin">
+        <div class="mc-new-body"><span>✓</span></div>
+        <div class="mc-pin-lbl" style="color:#2E7D32;font-size:10px">Новый адрес</div>
+      </div>
+      <div class="mc-cursor" id="mapCursor"></div>
+      <div class="map-hint" id="mapHint">Нажмите на карту, чтобы выбрать новую точку доставки</div>
+    </div>
+    <div class="map-modal-body">
+      <div class="modal-lbl">Адрес (текстом)</div>
+      <input class="map-addr-input" id="mapAddrInput" placeholder="Введите или уточните адрес..." value="ул. Навои 47, кв. 12">
+      <div class="modal-lbl">Причина изменения</div>
+      <select class="modal-sel" id="mapReason" style="margin-bottom:0">
+        <option value="">— Выберите причину —</option>
+        <option>Клиент исправил адрес</option>
+        <option>Ошибка при вводе клиентом</option>
+        <option>Переадресация на другой адрес</option>
+        <option>Иное</option>
+      </select>
+    </div>
+    <div class="map-modal-footer">
+      <button class="btn btn-ghost" onclick="closeOv('mapOv')">Отмена</button>
+      <button class="btn btn-primary" onclick="confirmMapAddr()">💾 Сохранить новый адрес</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ALERT: мерчант не начал готовку ══════════════════ -->
+<div class="overlay" id="alertOv">
+  <div class="alert-modal">
+    <div class="alert-hd warn">
+      <div class="alert-icon warn">⏰</div>
+      <div><div class="alert-title">Ресторан не начал готовку</div><div class="alert-sub">Расчётное время старта прошло 18 минут назад</div></div>
+    </div>
+    <div class="alert-body">
+      <div class="alert-info">
+        <div><div class="ai-lbl">Заказ</div><div class="ai-val">#TG-2844</div></div>
+        <div><div class="ai-lbl">Ресторан</div><div class="ai-val">Чайхона №1</div></div>
+        <div><div class="ai-lbl">Начало (план)</div><div class="ai-val" style="color:#E65100">09:00</div></div>
+        <div><div class="ai-lbl">Слот</div><div class="ai-val">13.05 · 13:00–14:30</div></div>
+      </div>
+      <div class="alert-timer-row">
+        <span class="alert-timer-lbl">Просрочка начала готовки:</span>
+        <span class="alert-timer-val atv-warn" id="alertT">+18:22</span>
+      </div>
+      <div class="alert-footer">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeOv('alertOv');toast('Отложено на 5 мин','orange')">Отложить 5 мин</button>
+        <button class="btn btn-orange" style="flex:2" onclick="closeOv('alertOv');toast('📞 Звонок в ресторан инициирован','green')">📞 Позвонить в ресторан</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"><div class="t-dot" id="tDot"></div><span id="tTxt"></span></div>
+
+<script>
+// ── CLOCK ─────────────────────────────────────────────────────────────────────
+function tick(){
+  const t=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('mainClk').textContent=t;
+  document.getElementById('opClk').textContent=t.slice(0,5);
+}
+setInterval(tick,1000);tick();
+
+// ── TIMERS ────────────────────────────────────────────────────────────────────
+let sla=82;
+setInterval(()=>{
+  sla=Math.max(0,sla-1);
+  const m=String(Math.floor(sla/60)).padStart(2,'0'),s=String(sla%60).padStart(2,'0');
+  const pct=(sla/900)*100, cls=sla>300?'ok':sla>180?'warn':'crit';
+  const v=document.getElementById('sla-v-1'),f=document.getElementById('sla-f-1');
+  if(v){v.textContent=`${m}:${s}`;v.className='sla-val sv-'+cls}
+  if(f){f.style.width=pct+'%';f.className='sla-fill sf-'+cls}
+},1000);
+
+let cookT=4642;
+setInterval(()=>{
+  cookT=Math.max(0,cookT-1);
+  const h=Math.floor(cookT/3600),m=String(Math.floor((cookT%3600)/60)).padStart(2,'0'),s=String(cookT%60).padStart(2,'0');
+  const el=document.getElementById('cook-v');
+  if(el)el.textContent=`${h?h+':':''}${m}:${s}`;
+  const f=document.getElementById('cook-f');
+  if(f){const cls=cookT<1800?'sf-crit':cookT<3600?'sf-warn':'sf-ok';f.className='sla-fill '+cls}
+},1000);
+
+let slotT=2828;
+setInterval(()=>{
+  slotT=Math.max(0,slotT-1);
+  const m=String(Math.floor(slotT/60)).padStart(2,'0'),s=String(slotT%60).padStart(2,'0');
+  const el=document.getElementById('slotT');
+  if(el){el.textContent=`${m}:${s}`;el.className='slot-timer'+(slotT<900?' crit':'')}
+},1000);
+
+let alertSec=1102;
+setInterval(()=>{
+  alertSec++;
+  const m=String(Math.floor(alertSec/60)).padStart(2,'0'),s=String(alertSec%60).padStart(2,'0');
+  const el=document.getElementById('alertT');if(el)el.textContent=`+${m}:${s}`;
+},1000);
+setTimeout(()=>document.getElementById('alertOv').classList.add('open'),3000);
+
+// ── CTRL CALL ─────────────────────────────────────────────────────────────────
+function markCtrl(){
+  const el=document.getElementById('ctrlCall');
+  const chk=document.getElementById('ctrlChk');
+  if(el&&chk){chk.checked=true;el.classList.add('done');el.querySelector('label').textContent='✓ Контрольный звонок сделан';toast('Контрольный звонок отмечен','green')}
+}
+
+// ── PANEL SWITCH ──────────────────────────────────────────────────────────────
+const PMETA={
+  new:{title:'Новые заказы',sub:'SLA 15 мин на подтверждение ресторана'},
+  accepted:{title:'Принято рестораном',sub:'Ожидание начала готовки'},
+  cooking:{title:'Готовится',sub:'Самый ответственный этап'},
+  ready:{title:'Готово к отправке',sub:'Проверка фотоотчётов'},
+  transit:{title:'В пути',sub:'GPS-мониторинг'},
+  done:{title:'Завершено',sub:'Архив успешных доставок'},
+  risk:{title:'Угроза инцидента ⚠️',sub:'Приоритетный разбор'},
+  incident:{title:'Инцидент 🚨',sub:'Критическая ситуация'},
+  cancelling:{title:'Отменяется',sub:'Ожидание транзакции Click'},
+  cancelled:{title:'Отменено',sub:'Архив отменённых заказов'},
+};
+let currentPanel='new';
+function goTab(key,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.otab').forEach(t=>t.classList.remove('active'));
+  const p=document.getElementById('panel-'+key);if(p)p.classList.add('active');
+  if(el)el.classList.add('active');
+  const m=PMETA[key]||{};
+  document.getElementById('panelTitle').textContent=m.title||'';
+  document.getElementById('panelSub').textContent=m.sub||'';
+  currentPanel=key;
+  // re-apply search to new panel
+  doSearch(document.getElementById('searchInput').value);
+  if(key==='incident'||key==='risk'){
+    try{const c=new(window.AudioContext||window.webkitAudioContext)();[0,200,400].forEach(d=>setTimeout(()=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=key==='incident'?880:660;g.gain.value=.18;o.start();o.stop(c.currentTime+.12)},d))}catch(e){}
+  }
+}
+
+// ── WORKING SEARCH ────────────────────────────────────────────────────────────
+function doSearch(q){
+  q=(q||'').toLowerCase().trim();
+  document.getElementById('srchClear').className='srch-clear'+(q?' show':'');
+  const panel=document.getElementById('panel-'+currentPanel);
+  if(!panel)return;
+  const cards=panel.querySelectorAll('.oc');
+  let visible=0;
+  cards.forEach(card=>{
+    const id=(card.dataset.id||'').toLowerCase();
+    const rest=(card.dataset.rest||'').toLowerCase();
+    const client=(card.dataset.client||'').toLowerCase();
+    const phone=(card.dataset.phone||'').toLowerCase();
+    const op=(card.dataset.op||'').toLowerCase();
+    const match=!q||id.includes(q)||rest.includes(q)||client.includes(q)||phone.includes(q);
+    card.dataset.hidden=match?'false':'true';
+    card.style.display=match?'':'none';
+    if(match)visible++;
+  });
+  // no-results
+  const nr=document.getElementById('nr-'+currentPanel);
+  if(nr)nr.className='no-results'+(visible===0?' show':'');
+}
+function clearSearch(){
+  const inp=document.getElementById('searchInput');
+  inp.value='';doSearch('');inp.focus();
+}
+
+// ── OP FILTER ─────────────────────────────────────────────────────────────────
+function toggleOpFilter(){
+  document.getElementById('opFilterWrap').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  const w=document.getElementById('opFilterWrap');
+  if(!w.contains(e.target))w.classList.remove('open');
+});
+let selectedOps=new Set(['all']);
+function toggleOpSelect(el,op){
+  const chk=el.querySelector('input');
+  if(op==='all'){
+    selectedOps=new Set(['all']);
+    document.querySelectorAll('.op-filter-item input').forEach(c=>c.checked=false);
+    document.querySelector('.op-filter-item:first-child input').checked=true;
+    document.querySelectorAll('.op-filter-item').forEach(i=>i.classList.remove('sel'));
+    el.classList.add('sel');
+  } else {
+    selectedOps.delete('all');
+    document.querySelector('.op-filter-item:first-child input').checked=false;
+    document.querySelector('.op-filter-item:first-child').classList.remove('sel');
+    chk.checked=!chk.checked;
+    if(chk.checked){selectedOps.add(op);el.classList.add('sel')}
+    else{selectedOps.delete(op);el.classList.remove('sel')}
+    if(selectedOps.size===0){selectedOps.add('all');document.querySelector('.op-filter-item:first-child input').checked=true;document.querySelector('.op-filter-item:first-child').classList.add('sel')}
+  }
+  applyOpFilter();
+  const btn=document.getElementById('opFilterBtn');
+  btn.className='filter-btn'+(selectedOps.has('all')?'':' active');
+}
+function applyOpFilter(){
+  const panel=document.getElementById('panel-'+currentPanel);
+  if(!panel)return;
+  panel.querySelectorAll('.oc').forEach(card=>{
+    if(selectedOps.has('all')){card.style.display='';return}
+    const op=card.dataset.op||'';
+    card.style.display=selectedOps.has(op)?'':'none';
+  });
+}
+
+// ── NOTES ─────────────────────────────────────────────────────────────────────
+function openNote(id){
+  const f=document.getElementById('nf-'+id);
+  if(f)f.style.display=f.style.display==='none'?'flex':'none';
+}
+function addNote(id){
+  const inp=document.getElementById('ni-'+id);
+  const txt=inp?inp.value.trim():'';
+  if(!txt){toast('Введите текст','red');return}
+  const now=new Date(),ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const list=document.getElementById('n-'+id);
+  const el=document.createElement('div');el.className='note-item';el.style.background='#F0FFF4';el.style.borderColor='#C8E6C9';
+  el.innerHTML=`<div class="note-meta"><div class="note-av">АМ</div><span class="note-who">Алишер М.</span><span class="note-ts">${ts}</span></div><div class="note-txt">${txt}</div>`;
+  list.appendChild(el);inp.value='';
+  document.getElementById('nf-'+id).style.display='none';
+  toast('Примечание добавлено','green');
+}
+
+// ── INC LOG ───────────────────────────────────────────────────────────────────
+function addLog(listId,inpId){
+  const inp=document.getElementById(inpId),txt=inp?inp.value.trim():'';
+  if(!txt){toast('Введите текст','red');return}
+  const now=new Date(),ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const list=document.getElementById(listId);
+  const el=document.createElement('div');el.className='log-entry';el.style.background='#F0FFF4';
+  el.innerHTML=`<div class="log-av">АМ</div><div><div class="log-m"><span class="log-who">Алишер М.</span> · ${ts}</div><div class="log-txt">${txt}</div></div>`;
+  list.appendChild(el);inp.value='';toast('Запись добавлена','green');
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openForce(id,status){
+  document.getElementById('fOrdId').textContent='#'+id;
+  document.getElementById('fNewSt').textContent=status;
+  document.getElementById('fReason').value='';
+  document.getElementById('fComment').value='';
+  document.getElementById('forceOv').classList.add('open');
+}
+function confirmForce(){
+  const r=document.getElementById('fReason').value,c=document.getElementById('fComment').value.trim();
+  if(!r){toast('Выберите причину','red');return}
+  if(r.includes('Иное')&&!c){toast('Введите комментарий для причины «Иное»','red');return}
+  closeOv('forceOv');toast('✓ Статус изменён. Записано в audit log.','green');
+}
+function openCancel(id){
+  document.getElementById('cOrdId').textContent='#'+id;
+  document.getElementById('cReason').value='';document.getElementById('cComment').value='';
+  document.getElementById('cancelOv').classList.add('open');
+}
+function confirmCancel(){
+  if(!document.getElementById('cReason').value){toast('Выберите причину','red');return}
+  closeOv('cancelOv');toast('Запрос на отмену отправлен начальнику КЦ','red');
+}
+function openEscModal(id){
+  document.getElementById('eOrdId').textContent='#'+id;
+  document.getElementById('eType').value='';document.getElementById('eComment').value='';
+  document.getElementById('escOv').classList.add('open');
+}
+function confirmEsc(){
+  if(!document.getElementById('eType').value){toast('Выберите тип эскалации','red');return}
+  closeOv('escOv');toast('↑ Эскалация направлена начальнику КЦ','purple');
+}
+function openMapModal(){
+  document.getElementById('mapNewPin').className='mc-new-pin';
+  document.getElementById('mapHint').style.display='';
+  document.getElementById('mapOv').classList.add('open');
+}
+function closeOv(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+// ── MAP INTERACTION ───────────────────────────────────────────────────────────
+const mapCanvas=document.getElementById('mapCanvas');
+mapCanvas.addEventListener('mousemove',e=>{
+  const r=mapCanvas.getBoundingClientRect();
+  const x=e.clientX-r.left,y=e.clientY-r.top;
+  const cur=document.getElementById('mapCursor');
+  cur.style.left=x+'px';cur.style.top=y+'px';cur.className='mc-cursor show';
+});
+mapCanvas.addEventListener('mouseleave',()=>document.getElementById('mapCursor').className='mc-cursor');
+function placePin(e){
+  const r=mapCanvas.getBoundingClientRect();
+  const x=((e.clientX-r.left)/r.width*100).toFixed(1);
+  const y=((e.clientY-r.top)/r.height*100).toFixed(1);
+  const pin=document.getElementById('mapNewPin');
+  pin.style.left=(parseFloat(x)-2)+'%';pin.style.top=(parseFloat(y)-10)+'%';
+  pin.className='mc-new-pin show';
+  document.getElementById('mapHint').style.display='none';
+  // update address input with fake coordinates
+  const lat=(41.29+parseFloat(y)/100*0.1).toFixed(4);
+  const lng=(69.24+parseFloat(x)/100*0.2).toFixed(4);
+  document.getElementById('mapAddrInput').value=`${lat}, ${lng} (выбрано на карте)`;
+  toast('Точка выбрана. Уточните адрес текстом.','blue');
+}
+function confirmMapAddr(){
+  const addr=document.getElementById('mapAddrInput').value.trim();
+  const r=document.getElementById('mapReason').value;
+  if(!addr||!r){toast('Заполните адрес и причину','red');return}
+  closeOv('mapOv');toast('✓ Адрес обновлён: '+addr.slice(0,40),'green');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let tt;
+function toast(text,color='blue'){
+  const cols={blue:'#4A6CF7',green:'#43A047',red:'#E53935',orange:'#FF6D00',purple:'#7C3AED'};
+  document.getElementById('tDot').style.background=cols[color]||cols.blue;
+  document.getElementById('tTxt').textContent=text;
+  const el=document.getElementById('toastEl');
+  el.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>el.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

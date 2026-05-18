@@ -155,6 +155,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .oc.oc-crit{border-color:rgba(239,68,68,.3);box-shadow:0 0 0 1px rgba(239,68,68,.08) inset}
 .oc.oc-warn{border-color:rgba(245,158,11,.3)}
 .oc.oc-esc{border-color:var(--purple);box-shadow:0 0 0 2px rgba(168,85,247,.12) inset;animation:escPulse 2s ease-in-out infinite}
+.oc.oc-resolved{border-color:rgba(34,197,94,.25);opacity:.75}
+.oc.oc-resolved .oc-hd{background:rgba(34,197,94,.04)}
 @keyframes escPulse{0%,100%{box-shadow:0 0 0 2px rgba(168,85,247,.12) inset}50%{box-shadow:0 0 0 2px rgba(168,85,247,.25) inset,0 0 16px rgba(168,85,247,.15)}}
 
 /* header */
@@ -577,12 +579,167 @@ body.role-sup .sup-only{display:inline-flex!important}
 .ddit.active{color:var(--orange);font-weight:600}
 .dd-sep{height:1px;background:var(--border);margin:4px 0}
 .dd-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;padding:6px 13px 2px}
+
+/* ══ ESCALATION NOTIFICATION POPUP ══ */
+.esc-notif{
+  position:fixed;top:66px;right:16px;z-index:5000;
+  background:var(--surface3);border:1px solid rgba(168,85,247,.5);border-left:3px solid var(--purple);
+  border-radius:10px;padding:12px 14px;min-width:280px;max-width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(168,85,247,.15);
+  transform:translateX(calc(100% + 24px));opacity:0;
+  transition:all .35s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.esc-notif.show{transform:translateX(0);opacity:1;pointer-events:auto}
+.esc-notif-hd{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.esc-notif-icon{width:28px;height:28px;border-radius:7px;background:var(--purple-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;animation:escPulse 1.5s ease-in-out infinite}
+.esc-notif-title{font-size:12px;font-weight:700;color:var(--purple);flex:1}
+.esc-notif-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;line-height:1;flex-shrink:0}
+.esc-notif-close:hover{color:var(--text)}
+.esc-notif-body{font-size:11px;color:var(--text2);line-height:1.5}
+.esc-notif-order{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--orange)}
+.esc-notif-type{font-size:12px;color:var(--text);font-weight:600;margin-top:3px}
+.esc-notif-ft{display:flex;gap:6px;margin-top:10px}
+
+/* ══ ESC SUBMENU ══ */
+.esc-submenu{
+  background:var(--surface2);border:1px solid rgba(168,85,247,.25);border-radius:8px;
+  margin-top:8px;overflow:hidden;
+}
+.esc-submenu-hd{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:linear-gradient(90deg,rgba(168,85,247,.08),transparent);
+  border-bottom:1px solid rgba(168,85,247,.15);cursor:pointer;user-select:none;
+}
+.esc-submenu-hd:hover{background:linear-gradient(90deg,rgba(168,85,247,.14),transparent)}
+.esc-submenu-title{font-size:11px;font-weight:700;color:var(--purple);flex:1}
+.esc-submenu-cnt{font-size:10px;font-weight:700;background:var(--red);color:#fff;padding:1px 7px;border-radius:8px}
+.esc-submenu-arrow{font-size:10px;color:var(--text3);transition:transform .2s}
+.esc-submenu.open .esc-submenu-arrow{transform:rotate(180deg)}
+.esc-submenu-body{display:none;padding:6px 0}
+.esc-submenu.open .esc-submenu-body{display:block}
+.esm-item{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.025);
+}
+.esm-item:last-child{border-bottom:none}
+.esm-item:hover{background:rgba(168,85,247,.08)}
+.esm-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;animation:blink .9s infinite}
+.esm-dot.resolved{background:var(--green);animation:none}
+.esm-id{font-family:var(--mono);font-size:11px;color:var(--orange);font-weight:600;min-width:72px}
+.esm-info{flex:1}
+.esm-from{font-size:10px;color:var(--blue);font-weight:600}
+.esm-type{font-size:11px;color:var(--text)}
+.esm-ts{font-size:10px;color:var(--text3);white-space:nowrap}
+.esm-empty{padding:12px;font-size:11px;color:var(--text3);text-align:center}
+
+/* ══ ALERT/INCIDENT FILTER TABS ══ */
+.alert-filter-bar{
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  padding:6px 14px;display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.afl-btn{
+  padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  border:1px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;
+  font-family:var(--font);transition:all .12s;
+}
+.afl-btn:hover{border-color:var(--orange);color:var(--orange)}
+.afl-btn.active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.afl-btn.active-green{background:var(--green-dim);border-color:rgba(34,197,94,.4);color:var(--green)}
+.afl-sep{width:1px;height:14px;background:var(--border)}
+.afl-count{font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:3px}
+
+/* ══ RESPONSIVE / ADAPTIVE ══ */
+@media(max-width:1100px){
+  .sidebar{width:180px}
+  .srch input{width:170px}
+  .srch input:focus{width:200px}
+  .team-kpis{grid-template-columns:repeat(2,1fr)}
+  .filter-bar{gap:6px;padding:6px 10px}
+  .di{width:110px}
+}
+@media(max-width:900px){
+  .sidebar{width:160px}
+  .topbar{padding:0 10px;gap:6px}
+  .srch input{width:140px}
+  .srch input:focus{width:165px}
+  .clk{font-size:11px;padding:3px 7px}
+  .shift-tag{font-size:10px;padding:2px 7px}
+  .oc-body{grid-template-columns:1fr}
+  .col:first-child{border-right:none;border-bottom:1px solid var(--border)}
+  .filter-bar{padding:5px 10px}
+  .di{width:95px}
+  .op-cards{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  body{font-size:12px}
+  .sidebar{display:none}
+  .sidebar.sb-open{display:flex;position:fixed;inset:0 auto 0 0;z-index:800;width:220px;box-shadow:4px 0 20px rgba(0,0,0,.5)}
+  .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:799}
+  .sb-overlay.show{display:block}
+  .topbar{padding:0 8px;gap:5px;height:48px}
+  .logo span{display:none}
+  .clk{display:none}
+  .shift-tag{display:none}
+  .srch input{width:120px}
+  .srch input:focus{width:150px}
+  .mob-menu-btn{display:flex!important}
+  .filter-bar{padding:5px 8px;gap:5px;flex-wrap:wrap}
+  .di{width:90px;font-size:10px}
+  .fl{display:none}
+  .f-sep{display:none}
+  .oc-hd{padding:7px 10px;gap:6px}
+  .fk{width:100px;font-size:9px;padding:5px 6px 5px 10px}
+  .fv{padding:5px 8px 5px 8px;font-size:11px}
+  .content{padding:8px 10px;gap:8px}
+  .oc-act{padding:7px 10px;gap:5px}
+  .btn{font-size:10px;padding:5px 9px}
+  .modal{width:calc(100vw - 24px);max-width:420px}
+  .map-modal{width:calc(100vw - 24px)}
+  .team-kpis{grid-template-columns:repeat(2,1fr);gap:8px}
+  .op-cards{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .srch{display:none}
+  .oc-body{grid-template-columns:1fr}
+  .topbar-right{gap:5px}
+}
+/* мобильная кнопка меню (скрыта на десктопе) */
+.mob-menu-btn{
+  display:none;width:32px;height:32px;border-radius:7px;
+  background:var(--surface2);border:1px solid var(--border);
+  align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0;
+}
 </style>
 </head>
 <body>
 
+<!-- ══ SIDEBAR OVERLAY (mobile) ══ -->
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
+
+<!-- ══ ESCALATION NOTIFICATION POPUP ══ -->
+<div class="esc-notif" id="escNotif">
+  <div class="esc-notif-hd">
+    <div class="esc-notif-icon">🔔</div>
+    <span class="esc-notif-title">↑ Новая эскалация!</span>
+    <button class="esc-notif-close" onclick="dismissEscNotif()">✕</button>
+  </div>
+  <div class="esc-notif-body">
+    <span class="esc-notif-order" id="encOrderId"></span>
+    <span style="color:var(--text3)"> · от </span>
+    <span style="font-weight:600;color:var(--blue)" id="encFrom"></span>
+    <div class="esc-notif-type" id="encType"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px" id="encTime"></div>
+  </div>
+  <div class="esc-notif-ft">
+    <button class="btn btn-ghost" style="flex:1;font-size:11px;padding:5px 10px" onclick="dismissEscNotif()">Позже</button>
+    <button class="btn btn-esc" style="flex:2;font-size:11px;padding:5px 10px" onclick="goToEscFromNotif()">🔔 Разобрать →</button>
+  </div>
+</div>
+
 <!-- ══ TOPBAR ══ -->
 <div class="topbar">
+  <button class="mob-menu-btn" id="mobMenuBtn" onclick="openSidebar()">☰</button>
   <div class="logo">TOG'ORA <span>v6</span></div>
   <div class="topbar-sep"></div>
   <div class="shift-tag" id="shiftTag">☀ Смена 1 · 05:00–12:00</div>
@@ -645,6 +802,18 @@ body.role-sup .sup-only{display:inline-flex!important}
     <div class="grp-lbl">Тревога</div>
     <div class="stab blink-y" id="stab-risk" onclick="goTab('risk',this)"><div class="tab-dot" style="background:var(--yellow);box-shadow:0 0 5px var(--yellow)"></div><span class="stn">Угроза инцидента ⚠️</span><span class="stc c-ye" id="cnt-risk">0</span></div>
     <div class="stab blink-r" id="stab-incident" onclick="goTab('incident',this)"><div class="tab-dot" style="background:var(--red);box-shadow:0 0 5px var(--red)"></div><span class="stn">Инцидент 🚨</span><span class="stc c-re" id="cnt-incident">0</span></div>
+    <!-- ЭСКАЛАЦИИ подменю -->
+    <div class="esc-submenu" id="escSubmenu">
+      <div class="esc-submenu-hd" onclick="toggleEscSubmenu()">
+        <span style="font-size:12px">🔔</span>
+        <span class="esc-submenu-title">Эскалации</span>
+        <span class="esc-submenu-cnt" id="escSubCnt">0</span>
+        <span class="esc-submenu-arrow">▾</span>
+      </div>
+      <div class="esc-submenu-body" id="escSubBody">
+        <div class="esm-empty" id="escSubEmpty">Нет активных эскалаций</div>
+      </div>
+    </div>
     <div class="stab" id="stab-cancelling" onclick="goTab('cancelling',this)"><div class="tab-dot" style="background:var(--text3)"></div><span class="stn">Отменяется</span><span class="stc c-gy" id="cnt-cancelling">0</span></div>
     <div class="stab" id="stab-cancelled" onclick="goTab('cancelled',this)"><div class="tab-dot" style="background:var(--text3)"></div><span class="stn">Отменено</span><span class="stc c-gy" id="cnt-cancelled">0</span></div>
   </div>
@@ -673,6 +842,14 @@ body.role-sup .sup-only{display:inline-flex!important}
 
   <!-- panels container -->
   <div id="panelsRoot" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+
+    <!-- ALERT FILTER BAR (показывается только для risk/incident) -->
+    <div class="alert-filter-bar" id="alertFilterBar" style="display:none">
+      <button class="afl-btn active" id="afl-all" onclick="setAlertFilter('all',this)">Все<span class="afl-count" style="background:var(--surface3);color:var(--text2)" id="afl-cnt-all">0</span></button>
+      <div class="afl-sep"></div>
+      <button class="afl-btn" id="afl-active" onclick="setAlertFilter('active',this)">Активные<span class="afl-count" style="background:var(--yellow-dim);color:var(--yellow)" id="afl-cnt-active">0</span></button>
+      <button class="afl-btn active-green" id="afl-resolved" onclick="setAlertFilter('resolved',this)" style="opacity:.7">Решённые<span class="afl-count" style="background:var(--green-dim);color:var(--green)" id="afl-cnt-resolved">0</span></button>
+    </div>
 
     <!-- TEAM PANEL -->
     <div class="panel" id="panel-team">
@@ -1024,6 +1201,11 @@ let currentOpFilter='all';
 let searchQuery='';
 let chipFilters={incidents:false,threats:false};
 let filterDates={of:'',ot:'',df:'',dt:''};
+let alertFilter='all'; // 'all' | 'active' | 'resolved' — for risk/incident tabs
+
+// alert filter state: 'active' means unresolved, 'resolved' means resolved flag set
+// We track resolved incidents/risks via a Set
+const RESOLVED_ALERTS = new Set(); // holds order IDs marked as resolved
 
 function getVisibleOrders(){
   let orders=ORDERS.filter(o=>o.status===currentTab);
@@ -1040,6 +1222,11 @@ function getVisibleOrders(){
   if(filterDates.dt)orders=orders.filter(o=>(o.slotDate||'')<=filterDates.dt);
   // Done chips
   if(currentTab==='done'){if(chipFilters.incidents)orders=orders.filter(o=>o.hasIncident);if(chipFilters.threats)orders=orders.filter(o=>o.hasThreat)}
+  // Alert filter for risk/incident
+  if(currentTab==='risk'||currentTab==='incident'){
+    if(alertFilter==='active')orders=orders.filter(o=>!RESOLVED_ALERTS.has(o.id));
+    else if(alertFilter==='resolved')orders=orders.filter(o=>RESOLVED_ALERTS.has(o.id));
+  }
   return orders;
 }
 function currentOperatorName(){return document.getElementById('roleLbl').textContent==='Оператор'?'Алишер М.':'ALL'}
@@ -1050,6 +1237,8 @@ function currentOperatorName(){return document.getElementById('roleLbl').textCon
 function renderAll(){
   updateCounts();
   renderPanel();
+  updateEscSubmenu();
+  if(currentTab==='risk'||currentTab==='incident')updateAlertFilterCounts();
 }
 function updateCounts(){
   const statuses=['new','accepted','cooking','ready','transit','done','risk','incident','cancelling','cancelled'];
@@ -1078,14 +1267,20 @@ function renderPanel(){
 function buildCard(o){
   const cfg=STATUS_CONFIG[o.status]||{};
   const isEsc=o.escalated&&currentRole==='supervisor';
+  const isResolved=RESOLVED_ALERTS.has(o.id);
   const div=document.createElement('div');
-  div.className='oc'+(o.status==='incident'||o.status==='risk'?' oc-crit':o.status==='cooking'?' oc-warn':'')+(isEsc?' oc-esc':'');
+  div.className='oc'+(o.status==='incident'||o.status==='risk'?' oc-crit':o.status==='cooking'?' oc-warn':'')+(isEsc?' oc-esc':'')+(isResolved?' oc-resolved':'');
   div.dataset.id=o.id;
+  let resolvedBadge='';
+  if(isResolved&&(o.status==='risk'||o.status==='incident')){
+    resolvedBadge=`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.2)">✓ Решено</span>`;
+  }
   let html=`
   <div class="oc-hd">
     <span class="oc-id">#${o.id}</span>
     <span class="oc-ts">${o.createdDate||''}</span>
     <span class="oc-op-tag" onclick="openChangeOp('${o.id}')" title="Нажмите чтобы изменить оператора">👤 ${o.operator||'—'}</span>
+    ${resolvedBadge}
     <span class="oc-badge ${cfg.cls}">${cfg.label}</span>
   </div>`;
   // Esc banner for supervisor
@@ -1215,10 +1410,11 @@ function buildActions(o){
   }
   if(isDone) btns+=`<button class="btn btn-danger" onclick="toast('Рекламация → Инцидент','red')">🚨 Рекламация → Инцидент</button>`;
   if(isRisk){
-    btns+=`<button class="btn btn-green" onclick="toast('Угроза снята','green')">✓ Угроза миновала</button>`;
+    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Угроза миновала</button>`;
     btns+=`<button class="btn btn-danger" onclick="toast('→ Инцидент','red')">🚨 → Инцидент</button>`;
   }
   if(isInc){
+    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Инцидент разрешён</button>`;
     btns+=`<button class="btn btn-primary" onclick="toast('Резервный курьер вызван','green')">🚗 Вызвать резерв</button>`;
   }
   if(isCxing) btns+=`<button class="btn btn-green" onclick="toast('Отмена подтверждена вручную','green')">✓ Подтвердить отмену вручную</button>`;
@@ -1358,8 +1554,43 @@ function goTab(key,el){
   // done extra filters
   const df=document.getElementById('done-extra-filters');
   if(df)df.style.display=key==='done'?'flex':'none';
+  // alert filter bar
+  const afb=document.getElementById('alertFilterBar');
+  if(afb){
+    if(key==='risk'||key==='incident'){
+      afb.style.display='flex';
+      alertFilter='all';
+      document.querySelectorAll('.afl-btn').forEach(b=>b.classList.remove('active','active-green'));
+      document.getElementById('afl-all').classList.add('active');
+      updateAlertFilterCounts();
+    } else {
+      afb.style.display='none';
+    }
+  }
   renderPanel();
   if(key==='incident'||key==='risk'){try{const c=new(window.AudioContext||window.webkitAudioContext)();[0,200,400].forEach(d=>setTimeout(()=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=key==='incident'?880:660;g.gain.value=.15;o.start();o.stop(c.currentTime+.12)},d))}catch(e){}}
+}
+
+function setAlertFilter(f,btnEl){
+  alertFilter=f;
+  document.querySelectorAll('.afl-btn').forEach(b=>b.classList.remove('active','active-green'));
+  if(f==='all')btnEl.classList.add('active');
+  else if(f==='active')btnEl.classList.add('active');
+  else if(f==='resolved')btnEl.classList.add('active-green');
+  renderPanel();
+}
+
+function updateAlertFilterCounts(){
+  const tab=currentTab;
+  if(tab!=='risk'&&tab!=='incident')return;
+  let all=ORDERS.filter(o=>o.status===tab);
+  if(currentRole==='operator')all=all.filter(o=>o.operator===currentOperatorName());
+  const active=all.filter(o=>!RESOLVED_ALERTS.has(o.id));
+  const resolved=all.filter(o=>RESOLVED_ALERTS.has(o.id));
+  const ea=document.getElementById('afl-cnt-all');const eac=document.getElementById('afl-cnt-active');const er=document.getElementById('afl-cnt-resolved');
+  if(ea)ea.textContent=all.length;
+  if(eac)eac.textContent=active.length;
+  if(er)er.textContent=resolved.length;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1431,9 +1662,14 @@ function confirmEsc(){
   const t=document.getElementById('eT').value;if(!t){toast('Выберите тип','red');return}
   const c=document.getElementById('eC').value.trim();
   const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  ESC_QUEUE.push({orderId:escId,from:'Алишер М.',type:t,comment:c,time:now,resolved:false});
+  const newEsc={orderId:escId,from:'Алишер М.',type:t,comment:c,time:now,resolved:false};
+  ESC_QUEUE.push(newEsc);
   const o=getOrder(escId);if(o)o.escalated=true;
-  closeOv('escOv');renderAll();toast('↑ Эскалация отправлена. Начальник КЦ уведомлён.','purple');
+  closeOv('escOv');renderAll();
+  updateEscSubmenu();
+  // Show popup notification
+  setTimeout(()=>showEscNotif(newEsc),400);
+  toast('↑ Эскалация отправлена. Начальник КЦ уведомлён.','purple');
 }
 let escActId=null;
 function openEscAct(id){
@@ -1450,7 +1686,9 @@ function confirmEscAct(){
   const d=document.getElementById('escActDecision').value;if(!d){toast('Выберите решение','red');return}
   ESC_QUEUE.filter(e=>e.orderId===escActId&&!e.resolved).forEach(e=>e.resolved=true);
   const o=getOrder(escActId);if(o)o.escalated=false;
-  closeOv('escActOv');renderAll();toast(`✓ Решение принято по #${escActId}. Оператор уведомлён.`,'green');
+  closeOv('escActOv');renderAll();
+  updateEscSubmenu();
+  toast(`✓ Решение принято по #${escActId}. Оператор уведомлён.`,'green');
 }
 let cancelSupId=null;
 function openCancelSup(id){cancelSupId=id;document.getElementById('csId').textContent='#'+id;document.getElementById('csR').value='';document.getElementById('csC').value='';document.getElementById('cancelSupOv').classList.add('open')}
@@ -1516,6 +1754,106 @@ function confirmAddr(){const v=document.getElementById('addrInp').value.trim(),r
 function openEscQueue(){if(currentRole==='supervisor'){goTab('team',document.getElementById('stab-team'))}else{toast('Эскалации видны начальнику КЦ','blue')}}
 
 // ═══════════════════════════════════════════════════════════════
+// ESCALATION NOTIFICATION POPUP
+// ═══════════════════════════════════════════════════════════════
+let escNotifTimer=null;
+let lastEscNotifId=null;
+
+function showEscNotif(esc){
+  if(lastEscNotifId===esc.orderId+'_'+esc.time)return;
+  lastEscNotifId=esc.orderId+'_'+esc.time;
+  document.getElementById('encOrderId').textContent='#'+esc.orderId;
+  document.getElementById('encFrom').textContent=esc.from;
+  document.getElementById('encType').textContent=esc.type;
+  document.getElementById('encTime').textContent='Получено в '+esc.time;
+  const el=document.getElementById('escNotif');
+  el.classList.add('show');
+  clearTimeout(escNotifTimer);
+  escNotifTimer=setTimeout(()=>el.classList.remove('show'),7000);
+  // play sound
+  try{const c=new(window.AudioContext||window.webkitAudioContext)();
+    [0,150].forEach(d=>setTimeout(()=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.1;o.start();o.stop(c.currentTime+.08)},d));
+  }catch(e){}
+}
+
+function dismissEscNotif(){
+  clearTimeout(escNotifTimer);
+  document.getElementById('escNotif').classList.remove('show');
+}
+
+function goToEscFromNotif(){
+  dismissEscNotif();
+  if(currentRole==='supervisor'){
+    const teamTab=document.getElementById('stab-team');
+    goTab('team',teamTab);
+  } else {
+    toast('Эскалации доступны начальнику КЦ','purple');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ESC SUBMENU (sidebar Тревога section)
+// ═══════════════════════════════════════════════════════════════
+function toggleEscSubmenu(){
+  document.getElementById('escSubmenu').classList.toggle('open');
+}
+
+function updateEscSubmenu(){
+  const unresolved=ESC_QUEUE.filter(e=>!e.resolved);
+  const cnt=document.getElementById('escSubCnt');
+  const body=document.getElementById('escSubBody');
+  const empty=document.getElementById('escSubEmpty');
+  if(cnt)cnt.textContent=unresolved.length;
+  if(cnt)cnt.style.background=unresolved.length>0?'var(--red)':'var(--green)';
+  if(cnt)cnt.style.color='#fff';
+  if(!body)return;
+  // Remove old items
+  Array.from(body.children).forEach(c=>{if(c!==empty)c.remove()});
+  if(unresolved.length===0){
+    if(empty){empty.style.display='block';empty.textContent='✓ Нет активных эскалаций';empty.style.color='var(--green)'}
+    return;
+  }
+  if(empty)empty.style.display='none';
+  unresolved.forEach(e=>{
+    const div=document.createElement('div');
+    div.className='esm-item';
+    div.innerHTML=`<div class="esm-dot"></div><span class="esm-id">#${e.orderId}</span><div class="esm-info"><div class="esm-from">${e.from}</div><div class="esm-type">${e.type}</div></div><span class="esm-ts">${e.time}</span>`;
+    div.onclick=()=>{
+      if(currentRole==='supervisor')openEscAct(e.orderId);
+      else{toast('Разбор доступен начальнику КЦ','purple');}
+    };
+    body.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MOBILE SIDEBAR
+// ═══════════════════════════════════════════════════════════════
+function openSidebar(){
+  document.querySelector('.sidebar').classList.add('sb-open');
+  document.getElementById('sbOverlay').classList.add('show');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('sb-open');
+  document.getElementById('sbOverlay').classList.remove('show');
+}
+
+// Override goTab to also close sidebar on mobile
+const _origGoTab=goTab;
+// Monkey-patch: wrap stab clicks to close sidebar
+document.addEventListener('click',e=>{
+  const stab=e.target.closest('.stab');
+  if(stab&&window.innerWidth<=700)closeSidebar();
+});
+
+function markAlertResolved(id){
+  RESOLVED_ALERTS.add(id);
+  updateAlertFilterCounts();
+  renderPanel();
+  toast(`✓ Запись #${id} отмечена как решённая`,'green');
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAP
 // ═══════════════════════════════════════════════════════════════
 function openFsMap(){document.getElementById('mapFs').classList.add('open')}
@@ -1539,6 +1877,14 @@ function toast(text,color='blue'){const cols={blue:'var(--blue)',green:'var(--gr
 // INIT
 // ═══════════════════════════════════════════════════════════════
 renderAll();
+// Demo: показать уведомление об эскалации через 5 сек
+setTimeout(()=>{
+  const demoEsc={orderId:'TG-2839',from:'Алишер М.',type:'Превышен лимит ожидания (15 мин)',comment:'Ресторан не берёт трубку уже 20 мин',time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})};
+  ESC_QUEUE.push(demoEsc);
+  const o=getOrder('TG-2839');if(o)o.escalated=true;
+  renderAll();
+  showEscNotif(demoEsc);
+},5000);
 </script>
 </body>
 </html>

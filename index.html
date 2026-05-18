@@ -686,7 +686,22 @@ setTimeout(()=>document.getElementById('alertOv').classList.add('open'),3000);
 
 // HELPERS
 function getOrder(id){return ORDERS.find(o=>o.id===id)}
-function currentOperatorName(){return document.getElementById('roleLbl').textContent==='Оператор'?'Алишер М.':'ALL'}
+function currentOperatorName(){
+  // В режиме оператора — имя выбранного оператора из фильтра или дефолт
+  if(currentRole==='supervisor')return'ALL';
+  return currentOpFilter!=='all'?currentOpFilter:'Алишер М.';
+}
+
+// Резервный курьер для инцидента
+function callReserveCourier(id){
+  const o=getOrder(id); if(!o)return;
+  const reserves=['Даврон К.','Жасур А.','Санжар К.'];
+  const free=reserves.find(r=>r!==o.courier)||reserves[0];
+  o.courier=free;
+  histPush(o,`🚗 Резервный курьер назначен: ${free}`,'action');
+  renderAll();
+  toast(`🚗 Резервный курьер ${free} назначен на #${id}`,'green');
+}
 
 // FILTERS
 function getVisibleOrders(){
@@ -930,26 +945,84 @@ function buildIncLog(o){
 }
 function buildActions(o){
   let btns='';
-  const isNew=o.status==='new',isAcc=o.status==='accepted',isCook=o.status==='cooking',isRdy=o.status==='ready',isTr=o.status==='transit',isDone=o.status==='done',isRisk=o.status==='risk',isInc=o.status==='incident',isCx=o.status==='cancelling',isCxd=o.status==='cancelled';
-  const isEsc=o.escalated&&currentRole==='supervisor';
-  if(!isDone&&!isCx&&!isCxd)btns+=`<button class="btn btn-ghost" onclick="openAddrModal('${o.id}')">📍 Адрес</button>`;
-  if(isNew)btns+=`<button class="btn btn-primary" onclick="openForce('${o.id}','accepted')">✓ Принято рестораном</button>`;
-  if(isAcc)btns+=`<button class="btn btn-primary" onclick="openForce('${o.id}','cooking')">🍳 Готовится</button>`;
-  if(isCook)btns+=`<button class="btn btn-primary" onclick="openForce('${o.id}','ready')">📦 Готово к отправке</button>`;
-  if(isRdy){btns+=`<button class="btn btn-ghost" onclick="toast('Вызов логиста…','blue')">📞 Логист</button>`;btns+=`<button class="btn btn-primary" onclick="openForce('${o.id}','transit')">🚗 В пути</button>`}
-  if(isTr){btns+=`<button class="btn btn-green" onclick="openForce('${o.id}','done')">✓ Завершено</button>`;btns+=`<button class="btn btn-ghost" onclick="toast('📞 Логист вызван','blue')">📞 Логист</button>`}
-  if(isDone)btns+=`<button class="btn btn-danger" onclick="toast('Рекламация → Инцидент','red')">🚨 Рекламация</button>`;
-  if(isRisk){btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Угроза миновала</button>`;btns+=`<button class="btn btn-danger" onclick="toast('→ Инцидент','red')">🚨 → Инцидент</button>`}
-  if(isInc){btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Инцидент разрешён</button>`;btns+=`<button class="btn btn-primary" onclick="toast('Резервный курьер вызван','green')">🚗 Вызвать резерв</button>`}
-  if(isCx)btns+=`<button class="btn btn-green" onclick="toast('Отмена подтверждена','green')">✓ Подтвердить отмену</button>`;
-  // Op buttons — direct, no "Ещё"
-  if(!isDone&&!isCx&&!isCxd){btns+=`<button class="btn btn-esc op-only" onclick="openEsc('${o.id}')">↑ Эскалировать</button>`;btns+=`<button class="btn btn-danger op-only" onclick="openCancel('${o.id}')" style="opacity:.85">${isInc?'💸 Запрос возврата':'✗ Запрос отмены'}</button>`}
-  // Supervisor
-  btns+=`<button class="btn btn-sup sup-only" onclick="openCC('${o.id}')">🚗 Курьер</button>`;
-  btns+=`<button class="btn btn-sup sup-only" onclick="openChangeOp('${o.id}')">👤 Оператор</button>`;
-  btns+=`<button class="btn btn-danger sup-only" onclick="openCancelSup('${o.id}')">✗ Отмена</button>`;
-  btns+=`<button class="btn btn-ghost sup-only" onclick="toast('💸 Возврат инициирован','green')" style="border-color:rgba(22,163,74,.25);color:var(--green)">💸 Возврат</button>`;
-  if(isEsc)btns=`<button class="btn btn-esc" onclick="openEscAct('${o.id}')" style="font-size:12px;padding:7px 14px">🔔 Разобрать эскалацию</button>`+btns;
+  const isNew=o.status==='new';
+  const isAcc=o.status==='accepted';
+  const isCook=o.status==='cooking';
+  const isRdy=o.status==='ready';
+  const isTr=o.status==='transit';
+  const isDone=o.status==='done';
+  const isRisk=o.status==='risk';
+  const isInc=o.status==='incident';
+  const isCx=o.status==='cancelling';
+  const isCxd=o.status==='cancelled';
+  const isAlert=isRisk||isInc;
+  const isActive=!isDone&&!isCx&&!isCxd&&!isAlert;
+  const isEscSup=o.escalated&&currentRole==='supervisor';
+
+  // ── Разобрать эскалацию (супервизор, приоритетно) ──
+  if(isEscSup){
+    btns+=`<button class="btn btn-esc" onclick="openEscAct('${o.id}')">🔔 Разобрать эскалацию</button>`;
+  }
+
+  // ── ОСНОВНАЯ КНОПКА: перевод на следующий статус ──
+  // Видна ВСЕМ (оператор + супервизор) — это главный рабочий флоу
+  if(isNew)
+    btns+=`<button class="btn btn-primary" onclick="quickNext('${o.id}')">✓ Принято рестораном</button>`;
+  if(isAcc)
+    btns+=`<button class="btn btn-primary" onclick="quickNext('${o.id}')">🍳 Начать готовку</button>`;
+  if(isCook)
+    btns+=`<button class="btn btn-primary" onclick="quickNext('${o.id}')">📦 Готово к отправке</button>`;
+  if(isRdy){
+    btns+=`<button class="btn btn-ghost" onclick="toast('📞 Логист вызван','blue')">📞 Вызвать логиста</button>`;
+    btns+=`<button class="btn btn-primary" onclick="quickNext('${o.id}')">🚗 Передано курьеру</button>`;
+  }
+  if(isTr){
+    btns+=`<button class="btn btn-green" onclick="quickNext('${o.id}')">✓ Доставлено</button>`;
+    btns+=`<button class="btn btn-ghost" onclick="toast('📞 Логист на связи','blue')">📞 Логист</button>`;
+  }
+
+  // ── Статус done ──
+  if(isDone){
+    btns+=`<button class="btn btn-danger" onclick="openClaim('${o.id}')">🚨 Рекламация</button>`;
+  }
+
+  // ── Статусы угроза / инцидент ──
+  if(isRisk){
+    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Угроза миновала</button>`;
+    btns+=`<button class="btn btn-danger" onclick="riskToIncident('${o.id}')">🚨 → Инцидент</button>`;
+  }
+  if(isInc){
+    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Инцидент разрешён</button>`;
+    btns+=`<button class="btn btn-primary" onclick="callReserveCourier('${o.id}')">🚗 Резервный курьер</button>`;
+  }
+
+  // ── Отменяется ──
+  if(isCx){
+    btns+=`<button class="btn btn-green" onclick="confirmManualCancel('${o.id}')">✓ Подтвердить отмену</button>`;
+    btns+=`<button class="btn btn-ghost sup-only" onclick="initiateRefund('${o.id}')" style="border-color:rgba(22,163,74,.25);color:var(--green)">💸 Возврат</button>`;
+  }
+
+  // ── Изменить адрес (все активные) ──
+  if(!isDone&&!isCxd)
+    btns+=`<button class="btn btn-ghost" onclick="openAddrModal('${o.id}')">📍 Адрес</button>`;
+
+  // ── Кнопки только оператора (эскалация / запрос отмены) ──
+  if(!isDone&&!isCxd){
+    btns+=`<button class="btn btn-esc op-only" onclick="openEsc('${o.id}')">↑ Эскалировать</button>`;
+    if(!isCx)
+      btns+=`<button class="btn btn-danger op-only" onclick="openCancel('${o.id}')" style="opacity:.85">✗ Запрос отмены</button>`;
+  }
+
+  // ── Кнопки только супервизора ──
+  if(!isCxd){
+    btns+=`<button class="btn btn-sup sup-only" onclick="openCC('${o.id}')">🚗 Курьер</button>`;
+    btns+=`<button class="btn btn-sup sup-only" onclick="openChangeOp('${o.id}')">👤 Оператор</button>`;
+  }
+  if(!isCx&&!isCxd&&!isDone)
+    btns+=`<button class="btn btn-danger sup-only" onclick="openCancelSup('${o.id}')">✗ Отмена</button>`;
+  if(!isCxd)
+    btns+=`<button class="btn btn-ghost sup-only" onclick="initiateRefund('${o.id}')" style="border-color:rgba(22,163,74,.25);color:var(--green)">💸 Возврат</button>`;
+
   return`<div class="oc-act">${btns}</div>`;
 }
 
@@ -1017,51 +1090,208 @@ function applyFilters(){filterDates={of:document.getElementById('fbOf').value,ot
 function toggleChip(el,type){chipFilters[type]=!chipFilters[type];el.classList.toggle('sel',chipFilters[type]);renderPanel()}
 function resetFilters(){filterDates={of:'',ot:'',df:'',dt:''};['fbOf','fbOt','fbDf','fbDt'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});chipFilters={incidents:false,threats:false};document.querySelectorAll('.fc').forEach(c=>c.classList.remove('sel'));renderPanel();toast('Фильтры сброшены','blue')}
 
-// MUTATIONS
-function openForce(id,status){forceOrderId=id;forceNewStatus=status;document.getElementById('fId').textContent='#'+id;document.getElementById('fSt').textContent=STATUS_CONFIG[status]?.label||status;document.getElementById('fR').value='';document.getElementById('fC').value='';document.getElementById('forceOv').classList.add('open')}
-function confirmForce(){
-  const r=document.getElementById('fR').value;if(!r){toast('Выберите причину','red');return}
-  const o=getOrder(forceOrderId);if(!o)return;const old=o.status;o.status=forceNewStatus;
+// ═══════════════════════════════════════════
+// MUTATIONS — полный флоу статусов
+// ═══════════════════════════════════════════
+
+// Хелпер: записать в историю
+function histPush(o, act, type='status'){
   const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  o.history=o.history||[];o.history.push({ts,op:currentRole==='supervisor'?'Начальник КЦ':'Алишер М.',act:`Статус: ${STATUS_CONFIG[old]?.label} → ${STATUS_CONFIG[forceNewStatus]?.label} (${r})`,type:'status'});
-  if(forceNewStatus==='cooking'&&!o.factCookStart)o.factCookStart=ts;if(forceNewStatus==='done')o.factDelivery=ts;
-  closeOv('forceOv');renderAll();toast(`✓ #${forceOrderId} → «${STATUS_CONFIG[forceNewStatus]?.label}»`,'green');
+  o.history=o.history||[];
+  o.history.push({ts, op: currentRole==='supervisor'?'Начальник КЦ': currentOperatorName()==='ALL'?o.operator:'Алишер М.', act, type});
+  return ts;
 }
-function openCancel(id){cancelId=id;document.getElementById('cId').textContent='#'+id;document.getElementById('cR').value='';document.getElementById('cC').value='';document.getElementById('cancelOv').classList.add('open')}
+
+// Смена статуса с моодальным подтверждением (для операторов — требует причину)
+function openForce(id, status){
+  forceOrderId=id; forceNewStatus=status;
+  document.getElementById('fId').textContent='#'+id;
+  document.getElementById('fSt').textContent=STATUS_CONFIG[status]?.label||status;
+  document.getElementById('fR').value='';
+  document.getElementById('fC').value='';
+  document.getElementById('forceOv').classList.add('open');
+}
+function confirmForce(){
+  const r=document.getElementById('fR').value; if(!r){toast('Выберите причину','red');return}
+  const o=getOrder(forceOrderId); if(!o)return;
+  const old=o.status;
+  changeStatus(o, forceNewStatus, `${r} (через модал)`);
+  closeOv('forceOv'); renderAll();
+  toast(`✓ #${forceOrderId} → «${STATUS_CONFIG[forceNewStatus]?.label}»`,'green');
+}
+
+// Быстрая смена статуса без модала (кнопка «→ следующий шаг»)
+function quickNext(id){
+  const o=getOrder(id); if(!o)return;
+  const flow={new:'accepted',accepted:'cooking',cooking:'ready',ready:'transit',transit:'done'};
+  const next=flow[o.status];
+  if(!next){toast('Финальный статус','blue');return}
+  changeStatus(o, next, 'Оператор перевёл вручную');
+  renderAll();
+  toast(`✓ #${id} → «${STATUS_CONFIG[next]?.label}»`,'green');
+}
+
+// Угроза → Инцидент
+function riskToIncident(id){
+  const o=getOrder(id); if(!o)return;
+  const prev=o.status;
+  o.prevStatus=prev; // запомним для возврата
+  changeStatus(o,'incident',`Угроза эскалировала в инцидент`);
+  renderAll();
+  toast(`🚨 #${id} → Инцидент`,'red');
+}
+
+// Инцидент / Угроза → решено: возвращаем в предыдущий логичный статус
+function markAlertResolved(id){
+  const o=getOrder(id); if(!o)return;
+  // Определяем возвратный статус
+  const returnStatus = o.prevStatus && !['risk','incident'].includes(o.prevStatus)
+    ? o.prevStatus
+    : 'accepted'; // безопасный дефолт
+  const ts=histPush(o,'✓ Угроза/инцидент разрешён, заказ восстановлен','check');
+  o.status=returnStatus;
+  o.prevStatus=undefined;
+  RESOLVED_ALERTS.delete(id); // снимаем флаг resolved — теперь он в нормальном статусе
+  updateAlertFilterCounts();
+  renderAll();
+  toast(`✓ #${id} возвращён в «${STATUS_CONFIG[returnStatus]?.label}»`,'green');
+}
+
+// Рекламация из done → incident
+function openClaim(id){
+  const o=getOrder(id); if(!o)return;
+  o.prevStatus='done';
+  changeStatus(o,'incident','Рекламация клиента');
+  o.incReason='Рекламация клиента после доставки';
+  o.incDetail='Переведено из статуса «Завершено» по жалобе';
+  renderAll();
+  toast(`🚨 Рекламация зарегистрирована для #${id}`,'red');
+}
+
+// Центральная функция смены статуса
+function changeStatus(o, newStatus, reason){
+  const old=o.status;
+  o.status=newStatus;
+  const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const op=currentRole==='supervisor'?'Начальник КЦ':o.operator||'Алишер М.';
+  o.history=o.history||[];
+  o.history.push({ts, op, act:`${STATUS_CONFIG[old]?.label||old} → ${STATUS_CONFIG[newStatus]?.label||newStatus}: ${reason}`, type:'status'});
+  // автозаполнение временны́х меток
+  if(newStatus==='accepted'&&!o.factAccepted)o.factAccepted=ts;
+  if(newStatus==='cooking'&&!o.factCookStart)o.factCookStart=ts;
+  if(newStatus==='ready'&&!o.factCookEnd)o.factCookEnd=ts;
+  if(newStatus==='transit'&&!o.factPickup)o.factPickup=ts;
+  if(newStatus==='done')o.factDelivery=ts;
+  if(newStatus==='cancelling'){o.refund=o.refund||o.sum;o.notifiedAt=ts;}
+}
+
+// Подтверждение отмены супервизором
+function confirmCancelSup(){
+  const r=document.getElementById('csR').value; if(!r){toast('Выберите причину','red');return}
+  const o=getOrder(cancelSupId); if(!o)return;
+  o.cancelReason=r;
+  changeStatus(o,'cancelling',r);
+  closeOv('cancelSupOv'); renderAll();
+  toast(`✗ Заказ #${cancelSupId} → Отменяется`,'red');
+}
+
+// Подтверждение ручной отмены оператором (уже в cancelling)
+function confirmManualCancel(id){
+  const o=getOrder(id); if(!o)return;
+  changeStatus(o,'cancelled','Отмена подтверждена вручную');
+  renderAll();
+  toast(`✗ Заказ #${id} окончательно отменён`,'red');
+}
+
+// Возврат денег (супервизор)
+function initiateRefund(id){
+  const o=getOrder(id); if(!o)return;
+  const ts=histPush(o,'💸 Click-возврат инициирован супервизором','action');
+  o.refundDone=true; o.refundAt=ts;
+  renderAll();
+  toast(`💸 Возврат инициирован для #${id}`,'green');
+}
+
+// Запрос на отмену от оператора → эскалация начальнику
+function openCancel(id){
+  cancelId=id;
+  document.getElementById('cId').textContent='#'+id;
+  document.getElementById('cR').value='';
+  document.getElementById('cC').value='';
+  document.getElementById('cancelOv').classList.add('open');
+}
 function confirmCancel(){
-  const r=document.getElementById('cR').value;if(!r){toast('Выберите причину','red');return}
-  const c=document.getElementById('cC').value.trim();const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  const newEsc={orderId:cancelId,from:'Алишер М.',type:'Запрос на отмену: '+r,comment:c,time:now,resolved:false};
-  ESC_QUEUE.push(newEsc);const o=getOrder(cancelId);if(o){o.escalated=true;o.history=o.history||[];o.history.push({ts:now,op:'Алишер М.',act:'↑ Запрос на отмену отправлен начальнику КЦ',type:'action'})}
-  closeOv('cancelOv');renderAll();updateEscSubmenu();setTimeout(()=>showEscNotif(newEsc),400);toast('Запрос на отмену отправлен','red');
+  const r=document.getElementById('cR').value; if(!r){toast('Выберите причину','red');return}
+  const c=document.getElementById('cC').value.trim();
+  const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const newEsc={orderId:cancelId,from: currentOperatorName()==='ALL'?getOrder(cancelId)?.operator||'Алишер М.':'Алишер М.',type:'Запрос на отмену: '+r,comment:c,time:now,resolved:false};
+  ESC_QUEUE.push(newEsc);
+  const o=getOrder(cancelId);
+  if(o){o.escalated=true; histPush(o,'↑ Запрос на отмену отправлен начальнику КЦ: '+r,'action')}
+  closeOv('cancelOv'); renderAll(); updateEscSubmenu();
+  setTimeout(()=>showEscNotif(newEsc),400);
+  toast('Запрос на отмену отправлен','red');
 }
-function openEsc(id){escId=id;document.getElementById('eId').textContent='#'+id;document.getElementById('eT').value='';document.getElementById('eC').value='';document.getElementById('escOv').classList.add('open')}
+
+// Эскалация от оператора
+function openEsc(id){
+  escId=id;
+  document.getElementById('eId').textContent='#'+id;
+  document.getElementById('eT').value='';
+  document.getElementById('eC').value='';
+  document.getElementById('escOv').classList.add('open');
+}
 function confirmEsc(){
-  const t=document.getElementById('eT').value;if(!t){toast('Выберите тип','red');return}
-  const c=document.getElementById('eC').value.trim();const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  const newEsc={orderId:escId,from:'Алишер М.',type:t,comment:c,time:now,resolved:false};
-  ESC_QUEUE.push(newEsc);const o=getOrder(escId);if(o){o.escalated=true;o.history=o.history||[];o.history.push({ts:now,op:'Алишер М.',act:`↑ Эскалация: ${t}`,type:'action'})}
-  closeOv('escOv');renderAll();updateEscSubmenu();setTimeout(()=>showEscNotif(newEsc),400);toast('↑ Эскалация отправлена','purple');
+  const t=document.getElementById('eT').value; if(!t){toast('Выберите тип','red');return}
+  const c=document.getElementById('eC').value.trim();
+  const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const op=currentOperatorName()==='ALL'?getOrder(escId)?.operator||'Алишер М.':'Алишер М.';
+  const newEsc={orderId:escId,from:op,type:t,comment:c,time:now,resolved:false};
+  ESC_QUEUE.push(newEsc);
+  const o=getOrder(escId);
+  if(o){o.escalated=true; histPush(o,`↑ Эскалация: ${t}`,'action')}
+  closeOv('escOv'); renderAll(); updateEscSubmenu();
+  setTimeout(()=>showEscNotif(newEsc),400);
+  toast('↑ Эскалация отправлена','purple');
 }
+
+// Разбор эскалации супервизором
 function openEscAct(id){
-  escActId=id;const esc=ESC_QUEUE.find(e=>e.orderId===id&&!e.resolved);if(!esc){toast('Нет активных эскалаций','red');return}
+  escActId=id;
+  const esc=ESC_QUEUE.find(e=>e.orderId===id&&!e.resolved);
+  if(!esc){toast('Нет активных эскалаций по этому заказу','red');return}
   document.getElementById('escActSub').innerHTML=`Заказ <strong>#${id}</strong> · от <strong>${esc.from}</strong> · ${esc.time}`;
-  document.getElementById('escActType').textContent=esc.type;document.getElementById('escActDesc').textContent=esc.comment||'—';
-  document.getElementById('escActDecision').value='';document.getElementById('escActNote').value='';document.getElementById('escActOv').classList.add('open');
+  document.getElementById('escActType').textContent=esc.type;
+  document.getElementById('escActDesc').textContent=esc.comment||'—';
+  document.getElementById('escActDecision').value='';
+  document.getElementById('escActNote').value='';
+  document.getElementById('escActOv').classList.add('open');
 }
 function confirmEscAct(){
-  const d=document.getElementById('escActDecision').value;if(!d){toast('Выберите решение','red');return}
-  const note=document.getElementById('escActNote').value.trim();const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  ESC_QUEUE.filter(e=>e.orderId===escActId&&!e.resolved).forEach(e=>{e.resolved=true;e.decision=d;e.note=note;e.resolvedAt=now});
-  const o=getOrder(escActId);if(o){o.escalated=false;o.history=o.history||[];o.history.push({ts:now,op:'Начальник КЦ',act:`↓ Решение: ${d}${note?' — '+note:''}`,type:'action'})}
-  closeOv('escActOv');renderAll();updateEscSubmenu();toast(`✓ Решение принято по #${escActId}`,'green');
+  const d=document.getElementById('escActDecision').value; if(!d){toast('Выберите решение','red');return}
+  const note=document.getElementById('escActNote').value.trim();
+  const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  ESC_QUEUE.filter(e=>e.orderId===escActId&&!e.resolved).forEach(e=>{
+    e.resolved=true; e.decision=d; e.note=note; e.resolvedAt=now;
+  });
+  const o=getOrder(escActId);
+  if(o){
+    o.escalated=false;
+    histPush(o,`↓ Решение начальника КЦ: ${d}${note?' — '+note:''}`, 'action');
+    // Автодействие по решению
+    if(d.includes('отменить заказ')){changeStatus(o,'cancelling','По решению начальника КЦ')}
+    else if(d.includes('выполнить возврат')){initiateRefund(escActId)}
+  }
+  closeOv('escActOv'); renderAll(); updateEscSubmenu();
+  toast(`✓ Решение принято по #${escActId}`,'green');
 }
-function openCancelSup(id){cancelSupId=id;document.getElementById('csId').textContent='#'+id;document.getElementById('csR').value='';document.getElementById('csC').value='';document.getElementById('cancelSupOv').classList.add('open')}
-function confirmCancelSup(){
-  const r=document.getElementById('csR').value;if(!r){toast('Выберите причину','red');return}
-  const o=getOrder(cancelSupId);const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  if(o){o.status='cancelling';o.cancelReason=r;o.refund=o.sum;o.notifiedAt=ts;o.history=o.history||[];o.history.push({ts,op:'Начальник КЦ',act:'✗ Заказ отменён: '+r,type:'incident'})}
-  closeOv('cancelSupOv');renderAll();toast(`✗ Заказ #${cancelSupId} отменён`,'red');
+
+function openCancelSup(id){
+  cancelSupId=id;
+  document.getElementById('csId').textContent='#'+id;
+  document.getElementById('csR').value='';
+  document.getElementById('csC').value='';
+  document.getElementById('cancelSupOv').classList.add('open');
 }
 function openCC(id){ccOrderId=id;const o=getOrder(id);document.getElementById('ccId').textContent='#'+id;document.getElementById('ccCurrent').textContent=o?.courier||'Не назначен';document.getElementById('ccNew').value='';document.getElementById('ccR').value='';document.getElementById('ccOv').classList.add('open')}
 function confirmCC(){const nv=document.getElementById('ccNew').value;if(!nv){toast('Выберите курьера','red');return}const cn=nv.split(' ').slice(0,2).join(' ');const o=getOrder(ccOrderId);const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});if(o){o.courier=cn;o.history=o.history||[];o.history.push({ts,op:'Начальник КЦ',act:'🚗 Курьер изменён на '+cn,type:'action'})}closeOv('ccOv');renderPanel();toast(`✓ Курьер изменён на ${cn}`,'green')}

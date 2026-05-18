@@ -619,10 +619,10 @@ body.role-sup .sup-only{display:inline-flex!important}
 
 <!-- MODALS -->
 <div class="overlay" id="forceOv"><div class="modal"><button class="modal-close" onclick="closeOv('forceOv')">✕</button><h3>Принудительная смена статуса</h3><div class="modal-sub">Заказ <strong id="fId"></strong> → <strong id="fSt" style="color:var(--green)"></strong></div><div class="modal-lbl">Причина (обязательно)</div><select class="msel" id="fR"><option value="">— Выберите причину —</option><option>Ресторан подтвердил голосом</option><option>Технический сбой системы</option><option>Иное</option></select><div class="modal-lbl">Комментарий</div><textarea class="mta" id="fC" placeholder="Обязателен для 'Иное'…"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('forceOv')">Отмена</button><button class="btn btn-primary" onclick="confirmForce()">Подтвердить</button></div></div></div>
-<div class="overlay" id="cancelOv"><div class="modal"><button class="modal-close" onclick="closeOv('cancelOv')">✕</button><h3>Запрос на отмену</h3><div class="modal-sub">Заказ <strong id="cId"></strong></div><div class="modal-lbl">Причина (обязательно)</div><select class="msel" id="cR"><option value="">— Выберите —</option><option>Клиент отказался</option><option>Ресторан отказал</option><option>Технический срыв</option><option>Курьер недоступен</option><option>Иное</option></select><div class="modal-lbl">Комментарий</div><textarea class="mta" id="cC" placeholder="Подробности…"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('cancelOv')">Отмена</button><button class="btn btn-danger" onclick="confirmCancel()">Отправить запрос</button></div></div></div>
+<div class="overlay" id="cancelOv"><div class="modal"><button class="modal-close" onclick="closeOv('cancelOv')">✕</button><h3>✗ Запрос на отмену</h3><div class="modal-sub">Заказ <strong id="cId"></strong> · Будет передан начальнику КЦ</div><div class="modal-lbl">Причина (обязательно)</div><select class="msel" id="cR"><option value="">— Выберите —</option><optgroup label="Клиент"><option>Клиент отказался</option><option>Клиент не найден</option><option>Клиент просит перенос</option></optgroup><optgroup label="Ресторан"><option>Ресторан отказал</option><option>Технический срыв</option><option>Ресторан не на связи</option></optgroup><optgroup label="Логистика"><option>Курьер недоступен / ДТП</option></optgroup><optgroup label="Прочее"><option>Технический сбой системы</option><option>Иное</option></optgroup></select><div class="modal-lbl">Рекомендация по возврату</div><div class="modal-radio-group"><div class="mradio sel" onclick="selRadio(this,'full')"><input type="radio" name="copRefund" value="full" checked><span class="mradio-lbl">💸 Полный возврат</span></div><div class="mradio" onclick="selRadio(this,'partial')"><input type="radio" name="copRefund" value="partial"><span class="mradio-lbl">💰 Частичный (решает начальник)</span></div><div class="mradio" onclick="selRadio(this,'none')"><input type="radio" name="copRefund" value="none"><span class="mradio-lbl">🚫 Без возврата (вина клиента)</span></div></div><div class="modal-lbl">Комментарий</div><textarea class="mta" id="cC" placeholder="Подробности ситуации…"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('cancelOv')">Отмена</button><button class="btn btn-danger" onclick="confirmCancel()">Отправить запрос</button></div></div></div>
 <div class="overlay" id="escOv"><div class="modal"><button class="modal-close" onclick="closeOv('escOv')">✕</button><h3>↑ Эскалация начальнику КЦ</h3><div class="modal-sub">Заказ <strong id="eId"></strong></div><div class="modal-lbl">Тип (обязательно)</div><select class="msel" id="eT"><option value="">— Выберите тип —</option><option>Ресторан не берёт трубку</option><option>Превышен лимит ожидания (15 мин)</option><option>Конфликт с клиентом</option><option>Требуется решение по возврату</option><option>ДТП / форс-мажор</option><option>Иное</option></select><div class="modal-lbl">Описание</div><textarea class="mta" id="eC" placeholder="Что произошло?"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('escOv')">Отмена</button><button class="btn btn-esc" onclick="confirmEsc()">↑ Эскалировать</button></div></div></div>
-<div class="overlay" id="escActOv"><div class="modal"><button class="modal-close" onclick="closeOv('escActOv')">✕</button><h3>↑ Разбор эскалации</h3><div class="modal-sub" id="escActSub"></div><div style="background:var(--purple-dim);border:1px solid rgba(124,58,237,.2);border-radius:7px;padding:10px 13px;margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:4px">Причина эскалации</div><div id="escActType" style="font-size:13px;color:var(--text)"></div><div id="escActDesc" style="font-size:12px;color:var(--text2);margin-top:3px"></div></div><div class="modal-lbl">Решение начальника КЦ</div><select class="msel" id="escActDecision"><option value="">— Принять решение —</option><option>Разрешил: оставить заказ</option><option>Разрешил: перевести статус</option><option>Разрешил: выполнить возврат</option><option>Разрешил: отменить заказ</option><option>Передал другому оператору</option></select><div class="modal-lbl">Комментарий</div><textarea class="mta" id="escActNote" placeholder="Инструкция для оператора…"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('escActOv')">Отмена</button><button class="btn btn-esc" onclick="confirmEscAct()">✓ Принять решение</button></div></div></div>
-<div class="overlay" id="cancelSupOv"><div class="modal"><button class="modal-close" onclick="closeOv('cancelSupOv')">✕</button><h3>✗ Отмена заказа</h3><div class="modal-sub">Заказ <strong id="csId"></strong></div><div class="modal-lbl">Причина</div><select class="msel" id="csR"><option value="">— Выберите —</option><option>Клиент отказался</option><option>Ресторан не может выполнить</option><option>Курьер недоступен</option><option>Иное</option></select><div class="modal-lbl">Комментарий</div><textarea class="mta" id="csC" placeholder="Может быть отправлен клиенту…"></textarea><div class="modal-lbl">Действие с деньгами</div><div class="modal-radio-group"><div class="mradio sel" onclick="selRadio(this,'full')"><input type="radio" name="pay" checked><span class="mradio-lbl">💸 Полный возврат</span></div><div class="mradio" onclick="selRadio(this,'partial')"><input type="radio" name="pay"><span class="mradio-lbl">💰 Частичный возврат</span></div><div class="mradio" onclick="selRadio(this,'none')"><input type="radio" name="pay"><span class="mradio-lbl">🚫 Без возврата</span></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('cancelSupOv')">Отмена</button><button class="btn btn-danger" onclick="confirmCancelSup()">✗ Отменить заказ</button></div></div></div>
+<div class="overlay" id="escActOv"><div class="modal"><button class="modal-close" onclick="closeOv('escActOv')">✕</button><h3>🔔 Разбор эскалации</h3><div class="modal-sub" id="escActSub"></div><div style="background:var(--purple-dim);border:1px solid rgba(124,58,237,.2);border-radius:7px;padding:10px 13px;margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:4px">Причина эскалации</div><div id="escActType" style="font-size:13px;color:var(--text);font-weight:600"></div><div id="escActDesc" style="font-size:12px;color:var(--text2);margin-top:4px"></div></div><div class="modal-lbl">Решение начальника КЦ</div><select class="msel" id="escActDecision" onchange="onEscDecisionChange(this.value)"><option value="">— Принять решение —</option><optgroup label="Продолжить выполнение"><option value="keep">✓ Оставить в текущем статусе, продолжить</option><option value="next">→ Перевести на следующий статус</option><option value="force_status">↕ Принудительно задать статус</option></optgroup><optgroup label="Отмена и возврат"><option value="cancel_full">✗ Отменить заказ — полный возврат</option><option value="cancel_partial">✗ Отменить заказ — частичный возврат</option><option value="cancel_none">✗ Отменить заказ — без возврата</option></optgroup><optgroup label="Прочее"><option value="courier">🚗 Назначить резервного курьера</option><option value="reassign">👤 Передать другому оператору</option><option value="clarify">❓ Запросить уточнение у оператора</option></optgroup></select><div id="escActStatusWrap" style="display:none;margin-bottom:12px"><div class="modal-lbl">Целевой статус</div><select class="msel" id="escActTargetStatus" style="margin-bottom:0"><option value="new">Новый</option><option value="accepted">Принято рестораном</option><option value="cooking">Готовится</option><option value="ready">Готово к отправке</option><option value="transit">В пути</option><option value="done">Завершено</option></select></div><div class="modal-lbl">Комментарий / инструкция</div><textarea class="mta" id="escActNote" placeholder="Инструкция для оператора…"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('escActOv')">Отмена</button><button class="btn btn-esc" onclick="confirmEscAct()">✓ Принять решение</button></div></div></div>
+<div class="overlay" id="cancelSupOv"><div class="modal"><button class="modal-close" onclick="closeOv('cancelSupOv')">✕</button><h3>✗ Отмена заказа</h3><div class="modal-sub">Заказ <strong id="csId"></strong> · Начальник КЦ</div><div class="modal-lbl">Причина отмены</div><select class="msel" id="csR"><option value="">— Выберите —</option><optgroup label="Клиент"><option>Клиент отказался</option><option>Клиент не найден при доставке</option><option>Клиент просит перенос слота</option></optgroup><optgroup label="Ресторан"><option>Ресторан не может выполнить</option><option>Технический срыв кухни</option><option>Ресторан не на связи</option></optgroup><optgroup label="Логистика"><option>Курьер недоступен / ДТП</option><option>Невозможно доставить в слот</option></optgroup><optgroup label="Прочее"><option>Форс-мажор</option><option>Иное</option></optgroup></select><div class="modal-lbl">Комментарий для клиента</div><textarea class="mta" id="csC" placeholder="Текст уведомления клиенту…"></textarea><div class="modal-lbl">Возврат средств</div><div class="modal-radio-group"><div class="mradio sel" onclick="selRadio(this,'full')"><input type="radio" name="csRefund" value="full" checked><span class="mradio-lbl">💸 Полный возврат (100%)</span></div><div class="mradio" onclick="selRadio(this,'partial')"><input type="radio" name="csRefund" value="partial"><span class="mradio-lbl">💰 Частичный возврат — указать сумму</span></div><div class="mradio" onclick="selRadio(this,'none')"><input type="radio" name="csRefund" value="none"><span class="mradio-lbl">🚫 Без возврата (вина клиента)</span></div></div><div id="csPartialWrap" style="display:none;margin-bottom:12px"><div class="modal-lbl">Сумма возврата (UZS)</div><input class="msel" type="number" id="csPartialAmt" placeholder="0" style="margin-bottom:0"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('cancelSupOv')">Отмена</button><button class="btn btn-danger" onclick="confirmCancelSup()">✗ Отменить заказ</button></div></div></div>
 <div class="overlay" id="ccOv"><div class="modal" style="width:400px"><button class="modal-close" onclick="closeOv('ccOv')">✕</button><h3>🚗 Изменить курьера</h3><div class="modal-sub">Заказ <strong id="ccId"></strong></div><div class="modal-lbl">Текущий</div><div id="ccCurrent" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:12px;font-weight:600;color:var(--green);margin-bottom:12px"></div><div class="modal-lbl">Назначить нового</div><select class="msel" id="ccNew"><option value="">— Выберите —</option><option>Даврон К. 🟢 Свободен</option><option>Жасур А. 🟢 Свободен</option><option>Санжар К. 🟢 Свободен</option></select><textarea class="mta" id="ccR" placeholder="Причина (опционально)…" style="height:44px;margin-bottom:14px"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('ccOv')">Отмена</button><button class="btn btn-primary" onclick="confirmCC()">Назначить</button></div></div></div>
 <div class="overlay" id="coOv"><div class="modal" style="width:380px"><button class="modal-close" onclick="closeOv('coOv')">✕</button><h3>👤 Изменить оператора</h3><div class="modal-sub">Заказ <strong id="coId"></strong></div><div class="modal-lbl">Текущий</div><div id="coCurrent" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:12px"></div><div class="modal-lbl">Назначить</div><select class="msel" id="coNew"><option value="">— Выберите —</option><option value="Нилуфар К.">Нилуфар К. 🟢 В сети</option><option value="Жасур Т.">Жасур Т. 🟢 В сети</option><option value="Алишер М.">Алишер М. 🟢 В сети</option><option value="Диёр Х.">Диёр Х. ⭕ Офлайн</option></select><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('coOv')">Отмена</button><button class="btn btn-primary" onclick="confirmCO()">Переназначить</button></div></div></div>
 <div class="overlay" id="rjPhOv"><div class="modal" style="width:370px"><button class="modal-close" onclick="closeOv('rjPhOv')">✕</button><h3>📷 Пометить как брак</h3><div class="modal-sub">Фото: <strong id="rjPhName"></strong></div><div class="modal-lbl">Причина</div><select class="msel" id="rjPhR"><option value="">— Выберите —</option><option>Блюдо выглядит неудовлетворительно</option><option>Упаковка повреждена</option><option>Фото размытое</option><option>Иное</option></select><textarea class="mta" id="rjPhC" placeholder="Что конкретно не так?" style="height:44px"></textarea><div class="modal-footer"><button class="btn btn-ghost" onclick="closeOv('rjPhOv')">Отмена</button><button class="btn btn-danger" onclick="confirmRjPh()">✗ Брак</button></div></div></div>
@@ -988,12 +988,15 @@ function buildActions(o){
 
   // ── Статусы угроза / инцидент ──
   if(isRisk){
-    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Угроза миновала</button>`;
+    btns+=`<button class="btn btn-green" onclick="openResolveAlert('${o.id}')">✓ Угроза устранена</button>`;
+    btns+=`<button class="btn btn-primary" onclick="openForce('${o.id}','cooking')" style="display:none" id="risk-next-${o.id}">▶ Перевести статус</button>`;
     btns+=`<button class="btn btn-danger" onclick="riskToIncident('${o.id}')">🚨 → Инцидент</button>`;
+    btns+=`<button class="btn btn-esc op-only" onclick="openEsc('${o.id}')">↑ Эскалировать</button>`;
   }
   if(isInc){
-    btns+=`<button class="btn btn-green" onclick="markAlertResolved('${o.id}')">✓ Инцидент разрешён</button>`;
+    btns+=`<button class="btn btn-green" onclick="openResolveAlert('${o.id}')">✓ Инцидент разрешён</button>`;
     btns+=`<button class="btn btn-primary" onclick="callReserveCourier('${o.id}')">🚗 Резервный курьер</button>`;
+    btns+=`<button class="btn btn-esc op-only" onclick="openEsc('${o.id}')">↑ Эскалировать</button>`;
   }
 
   // ── Отменяется ──
@@ -1188,11 +1191,17 @@ function changeStatus(o, newStatus, reason){
 // Подтверждение отмены супервизором
 function confirmCancelSup(){
   const r=document.getElementById('csR').value; if(!r){toast('Выберите причину','red');return}
+  const note=document.getElementById('csC').value.trim();
+  const refundType=document.querySelector('input[name="csRefund"]:checked')?.value||'full';
   const o=getOrder(cancelSupId); if(!o)return;
   o.cancelReason=r;
-  changeStatus(o,'cancelling',r);
+  // Логика возврата
+  if(refundType==='full'){o.refund=o.sum;o.refundNote='Полный возврат';}
+  else if(refundType==='partial'){const amt=document.getElementById('csPartialAmt')?.value;o.refund=amt?amt+' UZS':o.sum;o.refundNote='Частичный возврат';}
+  else{o.refund='0';o.refundNote='Без возврата — вина клиента';}
+  changeStatus(o,'cancelling', r+(note?' — '+note:''));
   closeOv('cancelSupOv'); renderAll();
-  toast(`✗ Заказ #${cancelSupId} → Отменяется`,'red');
+  toast(`✗ Заказ #${cancelSupId} → Отменяется · ${o.refundNote}`,'red');
 }
 
 // Подтверждение ручной отмены оператором (уже в cancelling)
@@ -1223,14 +1232,17 @@ function openCancel(id){
 function confirmCancel(){
   const r=document.getElementById('cR').value; if(!r){toast('Выберите причину','red');return}
   const c=document.getElementById('cC').value.trim();
+  const refundType=document.querySelector('input[name="copRefund"]:checked')?.value||'full';
+  const refundNote={full:'Рекомендует: полный возврат',partial:'Рекомендует: частичный возврат',none:'Рекомендует: без возврата'}[refundType];
   const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  const newEsc={orderId:cancelId,from: currentOperatorName()==='ALL'?getOrder(cancelId)?.operator||'Алишер М.':'Алишер М.',type:'Запрос на отмену: '+r,comment:c,time:now,resolved:false};
+  const opName=currentOperatorName()==='ALL'?getOrder(cancelId)?.operator||'Алишер М.':'Алишер М.';
+  const newEsc={orderId:cancelId,from:opName,type:'Запрос на отмену: '+r,comment:(c?c+' · ':'')+refundNote,time:now,resolved:false};
   ESC_QUEUE.push(newEsc);
   const o=getOrder(cancelId);
-  if(o){o.escalated=true; histPush(o,'↑ Запрос на отмену отправлен начальнику КЦ: '+r,'action')}
+  if(o){o.escalated=true; histPush(o,`↑ Запрос на отмену: ${r} · ${refundNote}`,'action')}
   closeOv('cancelOv'); renderAll(); updateEscSubmenu();
   setTimeout(()=>showEscNotif(newEsc),400);
-  toast('Запрос на отмену отправлен','red');
+  toast('Запрос на отмену отправлен начальнику КЦ','red');
 }
 
 // Эскалация от оператора
@@ -1256,6 +1268,9 @@ function confirmEsc(){
 }
 
 // Разбор эскалации супервизором
+function onEscDecisionChange(val){
+  document.getElementById('escActStatusWrap').style.display=val==='force_status'?'block':'none';
+}
 function openEscAct(id){
   escActId=id;
   const esc=ESC_QUEUE.find(e=>e.orderId===id&&!e.resolved);
@@ -1265,25 +1280,51 @@ function openEscAct(id){
   document.getElementById('escActDesc').textContent=esc.comment||'—';
   document.getElementById('escActDecision').value='';
   document.getElementById('escActNote').value='';
+  document.getElementById('escActStatusWrap').style.display='none';
   document.getElementById('escActOv').classList.add('open');
 }
 function confirmEscAct(){
   const d=document.getElementById('escActDecision').value; if(!d){toast('Выберите решение','red');return}
   const note=document.getElementById('escActNote').value.trim();
   const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const o=getOrder(escActId);
+  // Закрываем эскалации
   ESC_QUEUE.filter(e=>e.orderId===escActId&&!e.resolved).forEach(e=>{
     e.resolved=true; e.decision=d; e.note=note; e.resolvedAt=now;
   });
-  const o=getOrder(escActId);
   if(o){
     o.escalated=false;
     histPush(o,`↓ Решение начальника КЦ: ${d}${note?' — '+note:''}`, 'action');
-    // Автодействие по решению
-    if(d.includes('отменить заказ')){changeStatus(o,'cancelling','По решению начальника КЦ')}
-    else if(d.includes('выполнить возврат')){initiateRefund(escActId)}
+    // Автодействие по типу решения
+    if(d==='next'){
+      const flow={new:'accepted',accepted:'cooking',cooking:'ready',ready:'transit',transit:'done'};
+      const next=flow[o.status];
+      if(next){changeStatus(o,next,'По решению начальника КЦ');toast(`✓ #${escActId} → «${STATUS_CONFIG[next]?.label}»`,'green')}
+    } else if(d==='force_status'){
+      const target=document.getElementById('escActTargetStatus').value;
+      if(target){changeStatus(o,target,'Принудительный перевод начальником КЦ')}
+    } else if(d==='cancel_full'){
+      o.refund=o.sum; o.refundNote='Полный возврат';
+      changeStatus(o,'cancelling','Отмена по решению начальника КЦ — полный возврат');
+      toast(`✗ #${escActId} → Отменяется · Полный возврат`,'red');
+    } else if(d==='cancel_partial'){
+      o.refund=o.sum; o.refundNote='Частичный возврат (решает бухгалтерия)';
+      changeStatus(o,'cancelling','Отмена по решению начальника КЦ — частичный возврат');
+      toast(`✗ #${escActId} → Отменяется · Частичный возврат`,'red');
+    } else if(d==='cancel_none'){
+      o.refund='0'; o.refundNote='Без возврата';
+      changeStatus(o,'cancelling','Отмена — без возврата');
+      toast(`✗ #${escActId} → Отменяется · Без возврата`,'red');
+    } else if(d==='courier'){
+      histPush(o,'🚗 Назначен резервный курьер по решению начальника КЦ','action');
+      toast(`🚗 Резервный курьер назначен для #${escActId}`,'green');
+    } else if(d==='keep'){
+      toast(`✓ Решение принято — заказ продолжается`,'green');
+    } else {
+      toast(`✓ Решение принято по #${escActId}`,'green');
+    }
   }
   closeOv('escActOv'); renderAll(); updateEscSubmenu();
-  toast(`✓ Решение принято по #${escActId}`,'green');
 }
 
 function openCancelSup(id){
@@ -1301,7 +1342,7 @@ function openNoteForm(id){const nf=document.getElementById('nf-'+id);if(nf)nf.st
 function addNote(id){const inp=document.getElementById('ni-'+id),txt=inp?inp.value.trim():'';if(!txt)return;const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const o=getOrder(id);if(o){o.notes=o.notes||[];o.notes.push({op:'Алишер М.',time:ts,text:txt});o.history=o.history||[];o.history.push({ts,op:'Алишер М.',act:'📝 Примечание: '+txt,type:'note'})}renderPanel();toast('Примечание добавлено','green')}
 function addLog(id){const inp=document.getElementById('li-'+id),txt=inp?inp.value.trim():'';if(!txt)return;const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const o=getOrder(id);if(o){o.logs=o.logs||[];o.logs.push({op:'Алишер М.',time:ts,text:txt})}renderPanel();toast('Запись добавлена','green')}
 function markCtrl(id){const o=getOrder(id);if(o)o.ctrlDone=true;const el=document.getElementById('ctrl-'+id);if(el){el.className='ctrl-call done';const lbl=el.querySelector('label');if(lbl)lbl.textContent='✓ Контрольный звонок сделан'}const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const ord=getOrder(id);if(ord){ord.history=ord.history||[];ord.history.push({ts,op:'Алишер М.',act:'📞 Контрольный звонок выполнен',type:'call'})}toast('Контрольный звонок отмечен','green')}
-function markAlertResolved(id){RESOLVED_ALERTS.add(id);const ts=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});const o=getOrder(id);if(o){o.history=o.history||[];o.history.push({ts,op:currentRole==='supervisor'?'Начальник КЦ':'Алишер М.',act:'✓ Угроза/инцидент решён',type:'check'})}updateAlertFilterCounts();renderPanel();toast(`✓ #${id} отмечен как решённый`,'green')}
+// markAlertResolved defined above
 function approvePhoto(orderId,key){const o=getOrder(orderId);if(o&&o.photos)o.photos[key]='ok';const card=document.getElementById(`pc-${orderId}-${key}`);if(card){card.className='pcard p-ok';const b=card.querySelector('.pbadge');if(b){b.className='pbadge pb-ok';b.textContent='✓ Одобрено'}}toast('Фото одобрено','green')}
 function openRjPh(oid,key,name){rjPhOrderId=oid;rjPhKey=key;document.getElementById('rjPhName').textContent=name;document.getElementById('rjPhR').value='';document.getElementById('rjPhC').value='';document.getElementById('rjPhOv').classList.add('open')}
 function confirmRjPh(){const r=document.getElementById('rjPhR').value;if(!r){toast('Выберите причину','red');return}const o=getOrder(rjPhOrderId);if(o&&o.photos)o.photos[rjPhKey]='rejected';const card=document.getElementById(`pc-${rjPhOrderId}-${rjPhKey}`);if(card){card.className='pcard p-rej';const b=card.querySelector('.pbadge');if(b){b.className='pbadge pb-rej';b.textContent='✗ Брак'}}closeOv('rjPhOv');toast('Брак зафиксирован','orange')}
@@ -1309,6 +1350,60 @@ function openAddrModal(id){document.getElementById('acNew').style.display='none'
 function placePin(e){const r=document.getElementById('addrCanvas').getBoundingClientRect();const x=((e.clientX-r.left)/r.width*100).toFixed(1),y=((e.clientY-r.top)/r.height*100).toFixed(1);const pin=document.getElementById('acNew');pin.style.left=(parseFloat(x)-2)+'%';pin.style.top=(parseFloat(y)-10)+'%';pin.style.display='flex';document.getElementById('acHint').style.display='none';document.getElementById('addrInp').value=`${(41.29+parseFloat(y)/100*.1).toFixed(4)}, ${(69.24+parseFloat(x)/100*.2).toFixed(4)}`;toast('Точка выбрана','blue')}
 function confirmAddr(){const v=document.getElementById('addrInp').value.trim(),r=document.getElementById('addrR').value;if(!v||!r){toast('Заполните адрес и причину','red');return}const o=getOrder(activeAddrId);if(o)o.addr=v;closeOv('addrOv');renderPanel();toast('✓ Адрес обновлён','green')}
 
+
+// Открыть модал разрешения угрозы/инцидента
+let resolveAlertId=null;
+function openResolveAlert(id){
+  resolveAlertId=id;
+  const o=getOrder(id); if(!o)return;
+  const isInc=o.status==='incident';
+  document.getElementById('resolveAlertTitle').textContent=isInc?'Разрешить инцидент':'Устранить угрозу';
+  document.getElementById('resolveAlertSub').innerHTML=`Заказ <strong>#${id}</strong> · ${o.client} · ${o.rest}`;
+  const box=document.getElementById('resolveAlertInfoBox');
+  box.style.background=isInc?'var(--red-dim)':'var(--yellow-dim)';
+  box.style.borderColor=isInc?'rgba(220,38,38,.2)':'rgba(217,119,6,.2)';
+  document.getElementById('resolveAlertReason').style.color=isInc?'var(--red)':'var(--yellow)';
+  document.getElementById('resolveAlertReason').textContent=o.riskReason||o.incReason||'—';
+  document.getElementById('resolveAlertDetail').textContent=o.riskDetail||o.incDetail||'';
+  // Pre-select target status based on prevStatus
+  const target=document.getElementById('resolveAlertTargetStatus');
+  if(o.prevStatus&&!['risk','incident'].includes(o.prevStatus)) target.value=o.prevStatus;
+  else target.value='';
+  document.getElementById('resolveAlertHow').value='';
+  document.getElementById('resolveAlertNote').value='';
+  document.getElementById('resolveAlertOv').classList.add('open');
+}
+
+function confirmResolveAlert(){
+  const how=document.getElementById('resolveAlertHow').value; if(!how){toast('Укажите как разрешено','red');return}
+  const note=document.getElementById('resolveAlertNote').value.trim();
+  const targetStatus=document.getElementById('resolveAlertTargetStatus').value;
+  const o=getOrder(resolveAlertId); if(!o)return;
+  const wasAlert=o.status;
+  // Определяем финальный статус
+  let finalStatus=targetStatus;
+  if(!finalStatus){
+    // Авто-определение по prevStatus
+    finalStatus=o.prevStatus&&!['risk','incident'].includes(o.prevStatus)
+      ?o.prevStatus
+      :wasAlert==='incident'?'transit':'accepted';
+  }
+  histPush(o,`✓ ${wasAlert==='incident'?'Инцидент разрешён':'Угроза устранена'}: ${document.getElementById('resolveAlertHow').options[document.getElementById('resolveAlertHow').selectedIndex].text}${note?' — '+note:''}`, 'check');
+  o.status=finalStatus;
+  o.prevStatus=undefined;
+  RESOLVED_ALERTS.delete(resolveAlertId);
+  closeOv('resolveAlertOv');
+  renderAll();
+  toast(`✓ #${resolveAlertId} → «${STATUS_CONFIG[finalStatus]?.label}»`,'green');
+}
+
+// Резервный курьер
+function callReserveCourier(id){
+  const o=getOrder(id); if(!o)return;
+  histPush(o,'🚗 Запрошен резервный курьер (Яндекс.Такси)','action');
+  renderPanel();
+  toast(`🚗 Резервный курьер вызван для #${id}`,'green');
+}
 // ESC NOTIFICATION
 let escNotifTimer=null,lastEscId=null;
 function showEscNotif(esc){
@@ -1348,7 +1443,15 @@ function closeOv(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
 function toggleDdw(id){document.getElementById(id).classList.toggle('open')}
 document.addEventListener('click',e=>{document.querySelectorAll('.ddw.open').forEach(d=>{if(!d.contains(e.target))d.classList.remove('open')})});
-function selRadio(el,v){document.querySelectorAll('.mradio').forEach(r=>{r.classList.remove('sel');r.querySelector('input').checked=false});el.classList.add('sel');el.querySelector('input').checked=true}
+function selRadio(el,v){
+  // Find siblings in same modal-radio-group
+  const grp=el.closest('.modal-radio-group');
+  (grp||document).querySelectorAll('.mradio').forEach(r=>{r.classList.remove('sel');r.querySelector('input').checked=false});
+  el.classList.add('sel');el.querySelector('input').checked=true;
+  // Show/hide partial amount field if in cancelSupOv
+  const wrap=document.getElementById('csPartialWrap');
+  if(wrap)wrap.style.display=v==='partial'?'block':'none';
+}
 let tt;
 const COLORS_MAP={'blue':'#2563EB','green':'#16A34A','red':'#DC2626','orange':'#FF6B2B','yellow':'#D97706','purple':'#7C3AED'};
 function toast(text,color='blue'){document.getElementById('tDot').style.background=COLORS_MAP[color]||COLORS_MAP.blue;document.getElementById('tTxt').textContent=text;const el=document.getElementById('toastEl');el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3200)}
@@ -1361,5 +1464,52 @@ setTimeout(()=>{
   renderAll();showEscNotif(demoEsc);
 },4000);
 </script>
+
+<!-- RESOLVE ALERT MODAL -->
+<div class="overlay" id="resolveAlertOv">
+  <div class="modal" style="width:440px">
+    <button class="modal-close" onclick="closeOv('resolveAlertOv')">✕</button>
+    <h3 id="resolveAlertTitle">Разрешить угрозу</h3>
+    <div class="modal-sub" id="resolveAlertSub"></div>
+    <div style="background:var(--yellow-dim);border:1px solid rgba(217,119,6,.2);border-radius:7px;padding:10px 12px;margin-bottom:14px" id="resolveAlertInfoBox">
+      <div id="resolveAlertReason" style="font-size:12px;font-weight:600;color:var(--yellow)"></div>
+      <div id="resolveAlertDetail" style="font-size:11px;color:var(--text2);margin-top:3px"></div>
+    </div>
+    <div class="modal-lbl">Что произошло / как разрешено?</div>
+    <select class="msel" id="resolveAlertHow">
+      <option value="">— Выберите —</option>
+      <optgroup label="Ресторан">
+        <option value="rest_started">Ресторан подтвердил — начал готовку</option>
+        <option value="rest_ready">Ресторан сообщил о готовности</option>
+        <option value="rest_called">Оператор позвонил, ситуация под контролем</option>
+      </optgroup>
+      <optgroup label="Курьер">
+        <option value="courier_moving">Курьер возобновил движение</option>
+        <option value="courier_delivered">Курьер доставил заказ</option>
+        <option value="courier_replaced">Назначен резервный курьер</option>
+      </optgroup>
+      <optgroup label="Прочее">
+        <option value="client_agreed">Клиент согласился на задержку</option>
+        <option value="status_updated">Статус обновлён вручную</option>
+        <option value="other">Иное</option>
+      </optgroup>
+    </select>
+    <div class="modal-lbl">Перевести заказ в статус после разрешения</div>
+    <select class="msel" id="resolveAlertTargetStatus">
+      <option value="">— Оставить в текущем / выбрать —</option>
+      <option value="accepted">Принято рестораном</option>
+      <option value="cooking">Готовится</option>
+      <option value="ready">Готово к отправке</option>
+      <option value="transit">В пути</option>
+      <option value="done">Завершено</option>
+    </select>
+    <div class="modal-lbl">Комментарий</div>
+    <textarea class="mta" id="resolveAlertNote" placeholder="Дополнительные детали…" style="height:48px"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeOv('resolveAlertOv')">Отмена</button>
+      <button class="btn btn-green" onclick="confirmResolveAlert()">✓ Угроза/инцидент разрешён</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
